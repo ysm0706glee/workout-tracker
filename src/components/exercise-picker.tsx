@@ -16,6 +16,7 @@ interface ExercisePickerProps {
   onOpenChange: (open: boolean) => void;
   onSelect: (name: string) => void;
   title?: string;
+  filterGroup?: string | null;
 }
 
 export function ExercisePicker({
@@ -23,6 +24,7 @@ export function ExercisePicker({
   onOpenChange,
   onSelect,
   title = "Choose Exercise",
+  filterGroup,
 }: ExercisePickerProps) {
   const [search, setSearch] = useState("");
 
@@ -48,6 +50,7 @@ export function ExercisePicker({
         />
         <div>
           {Object.entries(DEFAULT_EXERCISES).map(([group, exercises]) => {
+            if (filterGroup && group !== filterGroup) return null;
             const filtered = exercises.filter((e) =>
               e.toLowerCase().includes(filter),
             );
@@ -70,7 +73,8 @@ export function ExercisePicker({
               </div>
             );
           })}
-          {Object.entries(DEFAULT_EXERCISES).every(([, exercises]) =>
+          {Object.entries(DEFAULT_EXERCISES).every(([group, exercises]) =>
+            (filterGroup && group !== filterGroup) ||
             exercises.every((e) => !e.toLowerCase().includes(filter)),
           ) && (
             <div className="py-10 text-center text-muted-foreground">
