@@ -17,7 +17,10 @@ import {
   getRoutineById,
 } from "./actions";
 import type { RoutineExercise } from "@/types/database";
-import { Plus } from "lucide-react";
+import { Plus, WifiOff } from "lucide-react";
+import { enqueue } from "@/lib/offline-queue";
+import { syncPendingWorkouts } from "@/lib/sync-workouts";
+import { getQueueCount } from "@/lib/offline-queue";
 
 interface SetData {
   weight: string;
@@ -39,9 +42,28 @@ function LogPageInner() {
   const [notes, setNotes] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
+  const [savedOffline, setSavedOffline] = useState(false);
   const [lastPerformances, setLastPerformances] = useState<
     Record<string, { sets: { weight: number; reps: number }[]; unit: string; date: string } | null>
   >({});
+
+  useEffect(() => {
+    setIsOffline(!navigator.onLine);
+    const goOffline = () => setIsOffline(true);
+    const goOnline = () => {
+      setIsOffline(false);
+      if (getQueueCount() > 0) {
+        syncPendingWorkouts();
+      }
+    };
+    window.addEventListener("offline", goOffline);
+    window.addEventListener("online", goOnline);
+    return () => {
+      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", goOnline);
+    };
+  }, []);
 
   const loadLastPerformance = useCallback(async (exerciseName: string) => {
     if (lastPerformances[exerciseName] !== undefined) return;
@@ -139,6 +161,19 @@ function LogPageInner() {
     );
   }
 
+  function saveToQueue(cleaned: { name: string; sets: { weight: number; reps: number }[] }[]) {
+    enqueue({
+      exercises: cleaned,
+      unit,
+      notes: notes.trim(),
+      date: new Date().toISOString().split("T")[0],
+    });
+    setSavedOffline(true);
+    setExercises([]);
+    setNotes("");
+    setTimeout(() => setSavedOffline(false), 3000);
+  }
+
   async function handleSave() {
     const valid = exercises.filter((ex) =>
       ex.sets.some((s) => s.weight && s.reps),
@@ -158,10 +193,21 @@ function LogPageInner() {
         })),
     }));
 
+    if (isOffline) {
+      saveToQueue(cleaned);
+      return;
+    }
+
     setSaving(true);
-    await saveWorkout(cleaned, unit, notes.trim());
-    setSaving(false);
-    router.push("/dashboard");
+    try {
+      await saveWorkout(cleaned, unit, notes.trim());
+      router.push("/dashboard");
+    } catch {
+      // Network failure — save to offline queue
+      saveToQueue(cleaned);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -204,8 +250,15 @@ function LogPageInner() {
         />
       </div>
 
+      {savedOffline && (
+        <div className="mb-3 rounded-md bg-yellow-600/20 px-4 py-2 text-center text-sm text-yellow-400">
+          <WifiOff className="mr-1 inline h-4 w-4" />
+          Saved offline — will sync when back online
+        </div>
+      )}
+
       <Button className="w-full" onClick={handleSave} disabled={saving}>
-        {saving ? "Saving..." : "Save Workout"}
+        {saving ? "Saving..." : isOffline ? "Save Offline" : "Save Workout"}
       </Button>
 
       <ExercisePicker

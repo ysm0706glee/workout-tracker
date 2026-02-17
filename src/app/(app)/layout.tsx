@@ -1,5 +1,7 @@
 import { TopBar } from "@/components/top-bar";
 import { BottomNav } from "@/components/bottom-nav";
+import { OfflineBanner } from "@/components/offline-banner";
+import { QueueSync } from "@/components/queue-sync";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -15,6 +17,8 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-dvh pb-20">
+      <OfflineBanner />
+      <QueueSync />
       <TopBar />
       <main className="p-5">{children}</main>
       <BottomNav routines={routines ?? []} />

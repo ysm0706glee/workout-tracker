@@ -82,3 +82,41 @@ export async function getRoutineById(id: string) {
     .single();
   return data;
 }
+
+export async function syncWorkout(
+  localId: string,
+  exercises: WorkoutExercise[],
+  unit: "kg" | "lb",
+  notes: string,
+  date: string,
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Dedup: skip if this local_id already exists for this user
+  const { data: existing } = await supabase
+    .from("workouts")
+    .select("id")
+    .eq("local_id", localId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) return;
+
+  const { error } = await supabase.from("workouts").insert({
+    user_id: user.id,
+    local_id: localId,
+    date,
+    unit,
+    exercises,
+    notes: notes || null,
+  });
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  revalidatePath("/progress");
+}
