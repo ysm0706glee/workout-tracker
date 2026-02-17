@@ -14,5 +14,8 @@ package-lock.json
 .vscode/
 .idea/
 
+# TypeScript
+tsconfig.tsbuildinfo
+
 # OS
 .DS_Store
