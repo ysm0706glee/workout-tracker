@@ -1,0 +1,82 @@
+import type { Workout } from "@/types/database";
+
+export function calculateStreak(workouts: Workout[]): number {
+  if (!workouts.length) return 0;
+
+  const dates = new Set(workouts.map((w) => w.date));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split("T")[0];
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+  let streak = 0;
+  let checkDate: Date;
+
+  if (dates.has(todayStr)) {
+    streak = 1;
+    checkDate = new Date(today);
+    checkDate.setDate(checkDate.getDate() - 1);
+  } else if (dates.has(yesterdayStr)) {
+    streak = 1;
+    checkDate = new Date(yesterday);
+    checkDate.setDate(checkDate.getDate() - 1);
+  } else {
+    return 0;
+  }
+
+  while (dates.has(checkDate.toISOString().split("T")[0])) {
+    streak++;
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  return streak;
+}
+
+export function calculateWeekCount(workouts: Workout[]): number {
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+
+  return workouts.filter((w) => new Date(w.date) >= weekStart).length;
+}
+
+export function calculate1RM(weight: number, reps: number): number {
+  return Math.round(weight * (1 + reps / 30));
+}
+
+export function calculatePR(
+  workouts: Workout[],
+  exerciseName: string,
+): {
+  maxWeight: number;
+  maxWeightDate: string;
+  maxE1rm: number;
+  maxVolume: number;
+} {
+  let maxWeight = 0;
+  let maxWeightDate = "";
+  let maxE1rm = 0;
+  let maxVolume = 0;
+
+  workouts.forEach((w) => {
+    const ex = w.exercises.find((e) => e.name === exerciseName);
+    if (!ex) return;
+
+    ex.sets.forEach((s) => {
+      if (s.weight > maxWeight) {
+        maxWeight = s.weight;
+        maxWeightDate = w.date;
+      }
+      const e1rm = calculate1RM(s.weight, s.reps);
+      if (e1rm > maxE1rm) maxE1rm = e1rm;
+    });
+
+    const vol = ex.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+    if (vol > maxVolume) maxVolume = vol;
+  });
+
+  return { maxWeight, maxWeightDate, maxE1rm, maxVolume };
+}

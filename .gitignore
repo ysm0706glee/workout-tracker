@@ -1,1 +1,18 @@
 config.js
+
+# Next.js
+.next/
+out/
+node_modules/
+package-lock.json
+
+# Environment
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
