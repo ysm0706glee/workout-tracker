@@ -5,6 +5,7 @@ import { SetRow } from "./set-row";
 import { LastPerformance } from "./last-performance";
 import { OverloadSuggestion } from "./overload-suggestion";
 import { ArrowRightLeft } from "lucide-react";
+import { getExerciseDescription } from "@/lib/constants/exercises";
 
 interface SetData {
   weight: string;
@@ -13,6 +14,7 @@ interface SetData {
 
 interface ExerciseBlockProps {
   name: string;
+  description?: string | null;
   sets: SetData[];
   unit: string;
   lastPerformance: {
@@ -31,6 +33,7 @@ interface ExerciseBlockProps {
 
 export function ExerciseBlock({
   name,
+  description,
   sets,
   unit,
   lastPerformance,
@@ -58,6 +61,11 @@ export function ExerciseBlock({
           </Button>
         </div>
       </div>
+      {(description || getExerciseDescription(name)) && (
+        <p className="mb-2 text-[12px] leading-snug text-muted-foreground">
+          {description || getExerciseDescription(name)}
+        </p>
+      )}
 
       {lastPerformance && (
         <LastPerformance

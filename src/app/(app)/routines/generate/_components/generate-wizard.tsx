@@ -174,7 +174,14 @@ export function GenerateWizard() {
                     key={ei}
                     className="flex items-center gap-2 rounded-lg bg-secondary p-2.5"
                   >
-                    <span className="flex-1 text-sm font-medium">{ex.name}</span>
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">{ex.name}</span>
+                      {ex.description && (
+                        <p className="text-[11px] leading-snug text-muted-foreground">
+                          {ex.description}
+                        </p>
+                      )}
+                    </div>
                     <Input
                       type="number"
                       className="w-[52px] text-center text-sm"

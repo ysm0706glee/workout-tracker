@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { createRoutine, updateRoutine } from "../actions";
+import { getExerciseDescription } from "@/lib/constants/exercises";
 import type { Routine, RoutineExercise } from "@/types/database";
 
 interface RoutineBuilderDialogProps {
@@ -121,9 +122,14 @@ export function RoutineBuilderDialog({
                       key={i}
                       className="flex items-center gap-2.5 rounded-lg border border-border bg-secondary p-3"
                     >
-                      <span className="flex-1 text-sm font-semibold">
-                        {ex.name}
-                      </span>
+                      <div className="flex-1">
+                        <span className="text-sm font-semibold">{ex.name}</span>
+                        {(ex.description || getExerciseDescription(ex.name)) && (
+                          <p className="text-[11px] leading-snug text-muted-foreground">
+                            {ex.description || getExerciseDescription(ex.name)}
+                          </p>
+                        )}
+                      </div>
                       <Input
                         type="number"
                         className="w-[60px] text-center"
