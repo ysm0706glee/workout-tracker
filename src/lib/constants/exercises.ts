@@ -1,3 +1,10 @@
+export function getExerciseMuscleGroup(name: string): string | null {
+  for (const [group, exercises] of Object.entries(DEFAULT_EXERCISES)) {
+    if (exercises.includes(name)) return group;
+  }
+  return null;
+}
+
 export const DEFAULT_EXERCISES: Record<string, string[]> = {
   Chest: [
     "Bench Press",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,8 @@ import {
   updateUnit,
   getRoutineById,
 } from "./actions";
+import { calculateOverloadSuggestion } from "@/lib/calculations";
+import { getExerciseMuscleGroup } from "@/lib/constants/exercises";
 import type { RoutineExercise } from "@/types/database";
 import { Plus, WifiOff } from "lucide-react";
 import { enqueue } from "@/lib/offline-queue";
@@ -44,6 +46,7 @@ function LogPageInner() {
   const [saving, setSaving] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
+  const [swapTarget, setSwapTarget] = useState<number | null>(null);
   const [lastPerformances, setLastPerformances] = useState<
     Record<string, { sets: { weight: number; reps: number }[]; unit: string; date: string } | null>
   >({});
@@ -100,6 +103,25 @@ function LogPageInner() {
     exercises.forEach((ex) => loadLastPerformance(ex.name));
   }, [exercises, loadLastPerformance]);
 
+  // Compute overload suggestions for each exercise
+  const suggestions = useMemo(() => {
+    const result: Record<string, { weight: number; reps: number } | null> = {};
+    for (const ex of exercises) {
+      const perf = lastPerformances[ex.name];
+      if (perf) {
+        const muscleGroup = getExerciseMuscleGroup(ex.name);
+        result[ex.name] = calculateOverloadSuggestion(
+          perf.sets,
+          unit,
+          muscleGroup,
+        );
+      } else {
+        result[ex.name] = null;
+      }
+    }
+    return result;
+  }, [exercises, lastPerformances, unit]);
+
   function handleUnitChange(newUnit: "kg" | "lb") {
     setUnit(newUnit);
     updateUnit(newUnit);
@@ -111,6 +133,40 @@ function LogPageInner() {
 
   function removeExercise(index: number) {
     setExercises(exercises.filter((_, i) => i !== index));
+  }
+
+  function swapExercise(index: number, newName: string) {
+    setExercises(
+      exercises.map((ex, i) =>
+        i === index ? { ...ex, name: newName } : ex,
+      ),
+    );
+  }
+
+  function handleSwapSelect(name: string) {
+    if (swapTarget !== null) {
+      swapExercise(swapTarget, name);
+      setSwapTarget(null);
+    }
+  }
+
+  function applySuggestion(exerciseIndex: number) {
+    const ex = exercises[exerciseIndex];
+    const suggestion = suggestions[ex.name];
+    if (!suggestion) return;
+
+    setExercises(
+      exercises.map((e, ei) => {
+        if (ei !== exerciseIndex) return e;
+        return {
+          ...e,
+          sets: e.sets.map((s) => ({
+            weight: s.weight || String(suggestion.weight),
+            reps: s.reps || String(suggestion.reps),
+          })),
+        };
+      }),
+    );
   }
 
   function updateSet(
@@ -210,6 +266,12 @@ function LogPageInner() {
     }
   }
 
+  // Get the muscle group for the swap picker filter
+  const swapFilterGroup =
+    swapTarget !== null
+      ? getExerciseMuscleGroup(exercises[swapTarget]?.name) ?? undefined
+      : undefined;
+
   return (
     <div>
       <UnitToggle unit={unit} onUnitChange={handleUnitChange} />
@@ -224,10 +286,13 @@ function LogPageInner() {
             sets={ex.sets}
             unit={unit}
             lastPerformance={lastPerformances[ex.name] ?? null}
+            suggestion={suggestions[ex.name] ?? null}
             onUpdateSet={(si, field, val) => updateSet(i, si, field, val)}
             onAddSet={() => addSet(i)}
             onRemoveSet={(si) => removeSet(i, si)}
             onRemoveExercise={() => removeExercise(i)}
+            onSwapExercise={() => setSwapTarget(i)}
+            onApplySuggestion={() => applySuggestion(i)}
           />
         ))
       )}
@@ -261,10 +326,22 @@ function LogPageInner() {
         {saving ? "Saving..." : isOffline ? "Save Offline" : "Save Workout"}
       </Button>
 
+      {/* Add exercise picker */}
       <ExercisePicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSelect={addExercise}
+      />
+
+      {/* Swap exercise picker (filtered by muscle group) */}
+      <ExercisePicker
+        open={swapTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setSwapTarget(null);
+        }}
+        onSelect={handleSwapSelect}
+        title="Swap Exercise"
+        filterGroup={swapFilterGroup}
       />
     </div>
   );

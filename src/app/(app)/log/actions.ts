@@ -120,3 +120,4 @@ export async function syncWorkout(
   revalidatePath("/history");
   revalidatePath("/progress");
 }
+

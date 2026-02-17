@@ -80,3 +80,50 @@ export function calculatePR(
 
   return { maxWeight, maxWeightDate, maxE1rm, maxVolume };
 }
+
+export function calculateOverloadSuggestion(
+  lastSets: { weight: number; reps: number }[],
+  unit: "kg" | "lb",
+  muscleGroup: string | null,
+): { weight: number; reps: number } | null {
+  if (!lastSets.length) return null;
+
+  // Find the most common weight used (mode)
+  const weightCounts = new Map<number, number>();
+  for (const s of lastSets) {
+    weightCounts.set(s.weight, (weightCounts.get(s.weight) || 0) + 1);
+  }
+  let mainWeight = 0;
+  let maxCount = 0;
+  for (const [w, count] of weightCounts) {
+    if (count > maxCount || (count === maxCount && w > mainWeight)) {
+      mainWeight = w;
+      maxCount = count;
+    }
+  }
+
+  if (mainWeight === 0) return null;
+
+  // Get target reps from the first set at main weight
+  const mainSets = lastSets.filter((s) => s.weight === mainWeight);
+  const targetReps = mainSets[0].reps;
+
+  // Check if all sets at main weight hit target reps
+  const allHitTarget = mainSets.every((s) => s.reps >= targetReps);
+
+  if (allHitTarget) {
+    // Progress: increase weight
+    const isLegs = muscleGroup === "Legs";
+    const increment = unit === "kg" ? (isLegs ? 5 : 2.5) : isLegs ? 10 : 5;
+    return {
+      weight: mainWeight + increment,
+      reps: targetReps,
+    };
+  }
+
+  // Didn't hit all reps — repeat same weight/reps
+  return {
+    weight: mainWeight,
+    reps: targetReps,
+  };
+}

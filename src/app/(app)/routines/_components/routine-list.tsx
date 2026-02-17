@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { RoutineCard } from "./routine-card";
 import { RoutineBuilderDialog } from "./routine-builder-dialog";
 import type { Routine } from "@/types/database";
+import { Sparkles } from "lucide-react";
 
 export function RoutineList({ routines }: { routines: Routine[] }) {
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -25,9 +27,17 @@ export function RoutineList({ routines }: { routines: Routine[] }) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold">My Routines</h2>
-        <Button size="sm" onClick={handleCreate}>
-          + New Routine
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link href="/routines/generate">
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              AI Generate
+            </Link>
+          </Button>
+          <Button size="sm" onClick={handleCreate}>
+            + New Routine
+          </Button>
+        </div>
       </div>
 
       {routines.length === 0 ? (

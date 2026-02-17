@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { SetRow } from "./set-row";
 import { LastPerformance } from "./last-performance";
+import { OverloadSuggestion } from "./overload-suggestion";
+import { ArrowRightLeft } from "lucide-react";
 
 interface SetData {
   weight: string;
@@ -18,10 +20,13 @@ interface ExerciseBlockProps {
     unit: string;
     date: string;
   } | null;
+  suggestion?: { weight: number; reps: number } | null;
   onUpdateSet: (setIndex: number, field: "weight" | "reps", value: string) => void;
   onAddSet: () => void;
   onRemoveSet: (setIndex: number) => void;
   onRemoveExercise: () => void;
+  onSwapExercise?: () => void;
+  onApplySuggestion?: () => void;
 }
 
 export function ExerciseBlock({
@@ -29,18 +34,29 @@ export function ExerciseBlock({
   sets,
   unit,
   lastPerformance,
+  suggestion,
   onUpdateSet,
   onAddSet,
   onRemoveSet,
   onRemoveExercise,
+  onSwapExercise,
+  onApplySuggestion,
 }: ExerciseBlockProps) {
   return (
     <div className="mb-3 rounded-[14px] border border-border bg-secondary p-4">
       <div className="mb-1 flex items-center justify-between">
         <div className="text-[16px] font-semibold">{name}</div>
-        <Button size="sm" variant="destructive" onClick={onRemoveExercise}>
-          Skip
-        </Button>
+        <div className="flex gap-1.5">
+          {onSwapExercise && (
+            <Button size="sm" variant="ghost" onClick={onSwapExercise}>
+              <ArrowRightLeft className="mr-1 h-3.5 w-3.5" />
+              Swap
+            </Button>
+          )}
+          <Button size="sm" variant="destructive" onClick={onRemoveExercise}>
+            Skip
+          </Button>
+        </div>
       </div>
 
       {lastPerformance && (
@@ -48,6 +64,15 @@ export function ExerciseBlock({
           sets={lastPerformance.sets}
           unit={lastPerformance.unit}
           date={lastPerformance.date}
+        />
+      )}
+
+      {suggestion && onApplySuggestion && (
+        <OverloadSuggestion
+          weight={suggestion.weight}
+          reps={suggestion.reps}
+          unit={unit}
+          onApply={onApplySuggestion}
         />
       )}
 
