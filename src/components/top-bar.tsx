@@ -1,4 +1,4 @@
-import { LogOutButton } from "@/components/logout-button";
+import { ProfileLink } from "@/components/profile-link";
 
 export function TopBar() {
   return (
@@ -7,7 +7,7 @@ export function TopBar() {
         <h1 className="text-[22px] font-bold tracking-tight">
           Iron<span className="text-[#a29bfe]">Log</span>
         </h1>
-        <LogOutButton />
+        <ProfileLink />
       </div>
     </header>
   );

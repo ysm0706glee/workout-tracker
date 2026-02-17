@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { createRoutine } from "../../actions";
 import { generateRoutines } from "../actions";
-import type { RoutineExercise } from "@/types/database";
+import type { RoutineExercise, UserProfile } from "@/types/database";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2, Check, X } from "lucide-react";
 
 interface GeneratedRoutine {
@@ -39,14 +39,14 @@ const MUSCLE_GROUPS = ["Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
 
 const STEPS = ["Goal", "Experience", "Frequency", "Equipment", "Focus"];
 
-export function GenerateWizard() {
+export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [goal, setGoal] = useState("");
-  const [experience, setExperience] = useState("");
+  const [goal, setGoal] = useState(profile?.fitness_goal ?? "");
+  const [experience, setExperience] = useState(profile?.experience ?? "");
   const [daysPerWeek, setDaysPerWeek] = useState(3);
   const [sessionMinutes, setSessionMinutes] = useState(60);
-  const [equipment, setEquipment] = useState("");
+  const [equipment, setEquipment] = useState(profile?.equipment ?? "");
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
