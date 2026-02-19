@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { createRoutine, updateRoutine } from "../actions";
+
 import type { Routine, RoutineExercise } from "@/types/database";
 
 interface RoutineBuilderDialogProps {
@@ -27,21 +28,11 @@ export function RoutineBuilderDialog({
   routine,
 }: RoutineBuilderDialogProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [exercises, setExercises] = useState<RoutineExercise[]>([]);
+  const [name, setName] = useState(routine?.name ?? "");
+  const [exercises, setExercises] = useState<RoutineExercise[]>(
+    () => routine?.exercises.map((e) => ({ ...e })) ?? [],
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      if (routine) {
-        setName(routine.name);
-        setExercises(routine.exercises.map((e) => ({ ...e })));
-      } else {
-        setName("");
-        setExercises([]);
-      }
-    }
-  }, [open, routine]);
 
   function addExercise(exerciseName: string) {
     setExercises([
@@ -116,18 +107,23 @@ export function RoutineBuilderDialog({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {exercises.map((ex, i) => (
+                  {exercises.map((exercise, i) => (
                     <div
                       key={i}
                       className="flex items-center gap-2.5 rounded-lg border border-border bg-secondary p-3"
                     >
-                      <span className="flex-1 text-sm font-semibold">
-                        {ex.name}
-                      </span>
+                      <div className="flex-1">
+                        <span className="text-sm font-semibold">{exercise.name}</span>
+                        {exercise.description && (
+                          <p className="text-[11px] leading-snug text-muted-foreground">
+                            {exercise.description}
+                          </p>
+                        )}
+                      </div>
                       <Input
                         type="number"
                         className="w-[60px] text-center"
-                        value={ex.defaultSets}
+                        value={exercise.defaultSets}
                         onChange={(e) =>
                           updateExerciseField(
                             i,
@@ -143,7 +139,7 @@ export function RoutineBuilderDialog({
                       <Input
                         type="number"
                         className="w-[60px] text-center"
-                        value={ex.defaultReps}
+                        value={exercise.defaultReps}
                         onChange={(e) =>
                           updateExerciseField(
                             i,

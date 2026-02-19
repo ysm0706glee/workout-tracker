@@ -62,10 +62,10 @@ export function calculatePR(
   let maxVolume = 0;
 
   workouts.forEach((w) => {
-    const ex = w.exercises.find((e) => e.name === exerciseName);
-    if (!ex) return;
+    const exercise = w.exercises.find((e) => e.name === exerciseName);
+    if (!exercise) return;
 
-    ex.sets.forEach((s) => {
+    exercise.sets.forEach((s) => {
       if (s.weight > maxWeight) {
         maxWeight = s.weight;
         maxWeightDate = w.date;
@@ -74,7 +74,7 @@ export function calculatePR(
       if (e1rm > maxE1rm) maxE1rm = e1rm;
     });
 
-    const vol = ex.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+    const vol = exercise.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
     if (vol > maxVolume) maxVolume = vol;
   });
 

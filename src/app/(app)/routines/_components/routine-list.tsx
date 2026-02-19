@@ -51,6 +51,7 @@ export function RoutineList({ routines }: { routines: Routine[] }) {
       )}
 
       <RoutineBuilderDialog
+        key={editingRoutine?.id ?? "new"}
         open={builderOpen}
         onOpenChange={setBuilderOpen}
         routine={editingRoutine}

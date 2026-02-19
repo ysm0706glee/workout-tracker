@@ -41,12 +41,12 @@ export async function generateRoutines(
     if (!routine.name || !Array.isArray(routine.exercises)) {
       throw new Error("Invalid routine structure from AI");
     }
-    for (const ex of routine.exercises) {
-      if (!ex.name || !ex.defaultSets || !ex.defaultReps) {
+    for (const exercise of routine.exercises) {
+      if (!exercise.name || !exercise.defaultSets || !exercise.defaultReps) {
         throw new Error("Invalid exercise structure from AI");
       }
-      ex.defaultSets = Math.max(1, Math.min(10, Math.round(ex.defaultSets)));
-      ex.defaultReps = Math.max(1, Math.min(30, Math.round(ex.defaultReps)));
+      exercise.defaultSets = Math.max(1, Math.min(10, Math.round(exercise.defaultSets)));
+      exercise.defaultReps = Math.max(1, Math.min(30, Math.round(exercise.defaultReps)));
     }
   }
 
