@@ -52,7 +52,7 @@ export function ExercisePicker({
           {Object.entries(DEFAULT_EXERCISES).map(([group, exercises]) => {
             if (filterGroup && group !== filterGroup) return null;
             const filtered = exercises.filter((e) =>
-              e.toLowerCase().includes(filter),
+              e.name.toLowerCase().includes(filter),
             );
             if (!filtered.length) return null;
             return (
@@ -60,14 +60,19 @@ export function ExercisePicker({
                 <div className="mb-2 mt-4 border-b border-border pb-2 text-sm font-bold uppercase tracking-wider text-[#a29bfe] first:mt-0">
                   {group}
                 </div>
-                {filtered.map((name) => (
+                {filtered.map((exercise) => (
                   <button
-                    key={name}
-                    onClick={() => handleSelect(name)}
+                    key={exercise.name}
+                    onClick={() => handleSelect(exercise.name)}
                     className="flex w-full items-center justify-between border-b border-border/50 py-3"
                   >
-                    <span className="text-[15px]">{name}</span>
-                    <Plus className="h-5 w-5 text-[#a29bfe]" />
+                    <div className="text-left">
+                      <span className="text-[15px]">{exercise.name}</span>
+                      <p className="text-[12px] leading-snug text-muted-foreground">
+                        {exercise.description}
+                      </p>
+                    </div>
+                    <Plus className="ml-2 h-5 w-5 shrink-0 text-[#a29bfe]" />
                   </button>
                 ))}
               </div>
@@ -75,7 +80,7 @@ export function ExercisePicker({
           })}
           {Object.entries(DEFAULT_EXERCISES).every(([group, exercises]) =>
             (filterGroup && group !== filterGroup) ||
-            exercises.every((e) => !e.toLowerCase().includes(filter)),
+            exercises.every((e) => !e.name.toLowerCase().includes(filter)),
           ) && (
             <div className="py-10 text-center text-muted-foreground">
               No exercises found

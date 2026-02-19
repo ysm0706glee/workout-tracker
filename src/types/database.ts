@@ -23,6 +23,7 @@ export interface RoutineExercise {
   name: string;
   defaultSets: number;
   defaultReps: number;
+  description?: string;
 }
 
 export interface Routine {

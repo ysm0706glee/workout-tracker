@@ -39,10 +39,10 @@ export function HistoryItem({ workout }: { workout: Workout }) {
 
         {expanded && (
           <div className="mt-2.5 border-t border-border pt-2.5">
-            {workout.exercises.map((ex, i) => (
+            {workout.exercises.map((exercise, i) => (
               <div key={i} className="mb-2">
-                <div className="text-sm font-semibold">{ex.name}</div>
-                {ex.sets.map((s, si) => (
+                <div className="text-sm font-semibold">{exercise.name}</div>
+                {exercise.sets.map((s, si) => (
                   <div
                     key={si}
                     className="pl-3 text-[13px] text-muted-foreground"

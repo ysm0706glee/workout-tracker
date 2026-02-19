@@ -39,11 +39,11 @@ export async function getLastPerformance(exerciseName: string) {
   if (!workouts) return null;
 
   for (const w of workouts) {
-    const ex = (w.exercises as WorkoutExercise[]).find(
+    const exercise = (w.exercises as WorkoutExercise[]).find(
       (e) => e.name === exerciseName,
     );
-    if (ex) {
-      return { sets: ex.sets, unit: w.unit || "kg", date: w.date };
+    if (exercise) {
+      return { sets: exercise.sets, unit: w.unit || "kg", date: w.date };
     }
   }
   return null;

@@ -100,23 +100,23 @@ function LogPageInner() {
   }, [routineId]);
 
   useEffect(() => {
-    exercises.forEach((ex) => loadLastPerformance(ex.name));
+    exercises.forEach((exercise) => loadLastPerformance(exercise.name));
   }, [exercises, loadLastPerformance]);
 
   // Compute overload suggestions for each exercise
   const suggestions = useMemo(() => {
     const result: Record<string, { weight: number; reps: number } | null> = {};
-    for (const ex of exercises) {
-      const perf = lastPerformances[ex.name];
+    for (const exercise of exercises) {
+      const perf = lastPerformances[exercise.name];
       if (perf) {
-        const muscleGroup = getExerciseMuscleGroup(ex.name);
-        result[ex.name] = calculateOverloadSuggestion(
+        const muscleGroup = getExerciseMuscleGroup(exercise.name);
+        result[exercise.name] = calculateOverloadSuggestion(
           perf.sets,
           unit,
           muscleGroup,
         );
       } else {
-        result[ex.name] = null;
+        result[exercise.name] = null;
       }
     }
     return result;
@@ -137,8 +137,8 @@ function LogPageInner() {
 
   function swapExercise(index: number, newName: string) {
     setExercises(
-      exercises.map((ex, i) =>
-        i === index ? { ...ex, name: newName } : ex,
+      exercises.map((exercise, i) =>
+        i === index ? { ...exercise, name: newName } : exercise,
       ),
     );
   }
@@ -151,8 +151,8 @@ function LogPageInner() {
   }
 
   function applySuggestion(exerciseIndex: number) {
-    const ex = exercises[exerciseIndex];
-    const suggestion = suggestions[ex.name];
+    const target = exercises[exerciseIndex];
+    const suggestion = suggestions[target.name];
     if (!suggestion) return;
 
     setExercises(
@@ -176,28 +176,28 @@ function LogPageInner() {
     value: string,
   ) {
     setExercises(
-      exercises.map((ex, ei) =>
+      exercises.map((exercise, ei) =>
         ei === exerciseIndex
           ? {
-              ...ex,
-              sets: ex.sets.map((s, si) =>
+              ...exercise,
+              sets: exercise.sets.map((s, si) =>
                 si === setIndex ? { ...s, [field]: value } : s,
               ),
             }
-          : ex,
+          : exercise,
       ),
     );
   }
 
   function addSet(exerciseIndex: number) {
     setExercises(
-      exercises.map((ex, ei) => {
-        if (ei !== exerciseIndex) return ex;
-        const last = ex.sets.at(-1);
+      exercises.map((exercise, ei) => {
+        if (ei !== exerciseIndex) return exercise;
+        const last = exercise.sets.at(-1);
         return {
-          ...ex,
+          ...exercise,
           sets: [
-            ...ex.sets,
+            ...exercise.sets,
             { weight: last?.weight ?? "", reps: last?.reps ?? "" },
           ],
         };
@@ -208,12 +208,12 @@ function LogPageInner() {
   function removeSet(exerciseIndex: number, setIndex: number) {
     setExercises(
       exercises
-        .map((ex, ei) => {
-          if (ei !== exerciseIndex) return ex;
-          const newSets = ex.sets.filter((_, si) => si !== setIndex);
-          return { ...ex, sets: newSets };
+        .map((exercise, ei) => {
+          if (ei !== exerciseIndex) return exercise;
+          const newSets = exercise.sets.filter((_, si) => si !== setIndex);
+          return { ...exercise, sets: newSets };
         })
-        .filter((ex) => ex.sets.length > 0),
+        .filter((exercise) => exercise.sets.length > 0),
     );
   }
 
@@ -231,17 +231,17 @@ function LogPageInner() {
   }
 
   async function handleSave() {
-    const valid = exercises.filter((ex) =>
-      ex.sets.some((s) => s.weight && s.reps),
+    const valid = exercises.filter((exercise) =>
+      exercise.sets.some((s) => s.weight && s.reps),
     );
     if (!valid.length) {
       alert("Add at least one exercise with weight and reps.");
       return;
     }
 
-    const cleaned = valid.map((ex) => ({
-      name: ex.name,
-      sets: ex.sets
+    const cleaned = valid.map((exercise) => ({
+      name: exercise.name,
+      sets: exercise.sets
         .filter((s) => s.weight && s.reps)
         .map((s) => ({
           weight: parseFloat(s.weight),
@@ -279,14 +279,14 @@ function LogPageInner() {
       {exercises.length === 0 ? (
         <EmptyState message="Add an exercise to begin" />
       ) : (
-        exercises.map((ex, i) => (
+        exercises.map((exercise, i) => (
           <ExerciseBlock
-            key={`${ex.name}-${i}`}
-            name={ex.name}
-            sets={ex.sets}
+            key={`${exercise.name}-${i}`}
+            name={exercise.name}
+            sets={exercise.sets}
             unit={unit}
-            lastPerformance={lastPerformances[ex.name] ?? null}
-            suggestion={suggestions[ex.name] ?? null}
+            lastPerformance={lastPerformances[exercise.name] ?? null}
+            suggestion={suggestions[exercise.name] ?? null}
             onUpdateSet={(si, field, val) => updateSet(i, si, field, val)}
             onAddSet={() => addSet(i)}
             onRemoveSet={(si) => removeSet(i, si)}
