@@ -30,11 +30,11 @@ export function ProgressDashboard({ workouts }: { workouts: Workout[] }) {
   const chartData = workouts
     .filter((w) => w.exercises.some((e) => e.name === selectedExercise))
     .map((w) => {
-      const ex = w.exercises.find((e) => e.name === selectedExercise)!;
-      const maxWeight = Math.max(...ex.sets.map((s) => s.weight));
-      const volume = ex.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+      const exercise = w.exercises.find((e) => e.name === selectedExercise)!;
+      const maxWeight = Math.max(...exercise.sets.map((s) => s.weight));
+      const volume = exercise.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
       const bestE1rm = Math.max(
-        ...ex.sets.map((s) => Math.round(s.weight * (1 + s.reps / 30))),
+        ...exercise.sets.map((s) => Math.round(s.weight * (1 + s.reps / 30))),
       );
       return {
         date: new Date(w.date + "T12:00:00").toLocaleDateString("en-US", {

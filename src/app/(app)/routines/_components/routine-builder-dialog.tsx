@@ -107,23 +107,23 @@ export function RoutineBuilderDialog({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {exercises.map((ex, i) => (
+                  {exercises.map((exercise, i) => (
                     <div
                       key={i}
                       className="flex items-center gap-2.5 rounded-lg border border-border bg-secondary p-3"
                     >
                       <div className="flex-1">
-                        <span className="text-sm font-semibold">{ex.name}</span>
-                        {ex.description && (
+                        <span className="text-sm font-semibold">{exercise.name}</span>
+                        {exercise.description && (
                           <p className="text-[11px] leading-snug text-muted-foreground">
-                            {ex.description}
+                            {exercise.description}
                           </p>
                         )}
                       </div>
                       <Input
                         type="number"
                         className="w-[60px] text-center"
-                        value={ex.defaultSets}
+                        value={exercise.defaultSets}
                         onChange={(e) =>
                           updateExerciseField(
                             i,
@@ -139,7 +139,7 @@ export function RoutineBuilderDialog({
                       <Input
                         type="number"
                         className="w-[60px] text-center"
-                        value={ex.defaultReps}
+                        value={exercise.defaultReps}
                         onChange={(e) =>
                           updateExerciseField(
                             i,

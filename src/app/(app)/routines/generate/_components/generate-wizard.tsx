@@ -169,23 +169,23 @@ export function GenerateWizard() {
                 className="mb-3 text-base font-bold"
               />
               <div className="space-y-2">
-                {routine.exercises.map((ex, ei) => (
+                {routine.exercises.map((exercise, ei) => (
                   <div
                     key={ei}
                     className="flex items-center gap-2 rounded-lg bg-secondary p-2.5"
                   >
                     <div className="flex-1">
-                      <span className="text-sm font-medium">{ex.name}</span>
-                      {ex.description && (
+                      <span className="text-sm font-medium">{exercise.name}</span>
+                      {exercise.description && (
                         <p className="text-[11px] leading-snug text-muted-foreground">
-                          {ex.description}
+                          {exercise.description}
                         </p>
                       )}
                     </div>
                     <Input
                       type="number"
                       className="w-[52px] text-center text-sm"
-                      value={ex.defaultSets}
+                      value={exercise.defaultSets}
                       onChange={(e) =>
                         updateExercise(ri, ei, "defaultSets", parseInt(e.target.value))
                       }
@@ -195,7 +195,7 @@ export function GenerateWizard() {
                     <Input
                       type="number"
                       className="w-[52px] text-center text-sm"
-                      value={ex.defaultReps}
+                      value={exercise.defaultReps}
                       onChange={(e) =>
                         updateExercise(ri, ei, "defaultReps", parseInt(e.target.value))
                       }
