@@ -12,11 +12,10 @@ interface GeneratedRoutine {
   exercises: RoutineExercise[];
 }
 
-const client = new Anthropic();
-
 export async function generateRoutines(
   input: RoutineGenerationInput,
 ): Promise<GeneratedRoutine[]> {
+  const client = new Anthropic();
   const prompt = buildRoutineGenerationPrompt(input);
 
   const message = await client.messages.create({

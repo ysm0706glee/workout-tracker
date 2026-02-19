@@ -19,3 +19,4 @@ package-lock.json
 
 # TypeScript
 tsconfig.tsbuildinfo
+next-env.d.ts
