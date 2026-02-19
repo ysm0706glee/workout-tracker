@@ -36,13 +36,17 @@ export default function LoginPage() {
     setLoading(true);
 
     if (mode === "login") {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       setLoading(false);
       if (authError) {
         setError(authError.message);
+        return;
+      }
+      if (!data.session) {
+        setError("Login failed. Please try again.");
         return;
       }
       window.location.href = "/dashboard";
