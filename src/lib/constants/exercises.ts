@@ -10,13 +10,6 @@ export function getExerciseMuscleGroup(name: string): string | null {
   return null;
 }
 
-export function getExerciseDescription(name: string): string | null {
-  for (const exercises of Object.values(DEFAULT_EXERCISES)) {
-    const found = exercises.find((e) => e.name === name);
-    if (found) return found.description;
-  }
-  return null;
-}
 
 export const DEFAULT_EXERCISES: Record<string, ExerciseInfo[]> = {
   Chest: [

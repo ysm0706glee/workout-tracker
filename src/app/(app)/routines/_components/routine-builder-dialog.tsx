@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { createRoutine, updateRoutine } from "../actions";
-import { getExerciseDescription } from "@/lib/constants/exercises";
+
 import type { Routine, RoutineExercise } from "@/types/database";
 
 interface RoutineBuilderDialogProps {
@@ -28,21 +28,11 @@ export function RoutineBuilderDialog({
   routine,
 }: RoutineBuilderDialogProps) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [exercises, setExercises] = useState<RoutineExercise[]>([]);
+  const [name, setName] = useState(routine?.name ?? "");
+  const [exercises, setExercises] = useState<RoutineExercise[]>(
+    () => routine?.exercises.map((e) => ({ ...e })) ?? [],
+  );
   const [pickerOpen, setPickerOpen] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      if (routine) {
-        setName(routine.name);
-        setExercises(routine.exercises.map((e) => ({ ...e })));
-      } else {
-        setName("");
-        setExercises([]);
-      }
-    }
-  }, [open, routine]);
 
   function addExercise(exerciseName: string) {
     setExercises([
@@ -124,9 +114,9 @@ export function RoutineBuilderDialog({
                     >
                       <div className="flex-1">
                         <span className="text-sm font-semibold">{ex.name}</span>
-                        {(ex.description || getExerciseDescription(ex.name)) && (
+                        {ex.description && (
                           <p className="text-[11px] leading-snug text-muted-foreground">
-                            {ex.description || getExerciseDescription(ex.name)}
+                            {ex.description}
                           </p>
                         )}
                       </div>

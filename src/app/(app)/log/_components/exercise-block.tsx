@@ -5,7 +5,6 @@ import { SetRow } from "./set-row";
 import { LastPerformance } from "./last-performance";
 import { OverloadSuggestion } from "./overload-suggestion";
 import { ArrowRightLeft } from "lucide-react";
-import { getExerciseDescription } from "@/lib/constants/exercises";
 
 interface SetData {
   weight: string;
@@ -61,9 +60,9 @@ export function ExerciseBlock({
           </Button>
         </div>
       </div>
-      {(description || getExerciseDescription(name)) && (
+      {description && (
         <p className="mb-2 text-[12px] leading-snug text-muted-foreground">
-          {description || getExerciseDescription(name)}
+          {description}
         </p>
       )}
 
