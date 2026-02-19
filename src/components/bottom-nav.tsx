@@ -28,7 +28,8 @@ export function BottomNav({ routines }: { routines: Routine[] }) {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-end border-t border-border bg-[rgba(20,20,32,0.92)] px-0 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl">
+      <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-md -translate-x-1/2 border-t border-border bg-[rgba(20,20,32,0.92)] pb-[max(8px,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl">
+        <div className="flex items-end">
         {navItems.map((item) => {
           const isActive = item.href !== "#start" && pathname.startsWith(item.href);
 
@@ -58,6 +59,7 @@ export function BottomNav({ routines }: { routines: Routine[] }) {
             </button>
           );
         })}
+        </div>
       </nav>
       <StartWorkoutDialog
         routines={routines}
