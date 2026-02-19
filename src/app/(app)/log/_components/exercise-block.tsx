@@ -13,6 +13,7 @@ interface SetData {
 
 interface ExerciseBlockProps {
   name: string;
+  description?: string | null;
   sets: SetData[];
   unit: string;
   lastPerformance: {
@@ -31,6 +32,7 @@ interface ExerciseBlockProps {
 
 export function ExerciseBlock({
   name,
+  description,
   sets,
   unit,
   lastPerformance,
@@ -58,6 +60,11 @@ export function ExerciseBlock({
           </Button>
         </div>
       </div>
+      {description && (
+        <p className="mb-2 text-[12px] leading-snug text-muted-foreground">
+          {description}
+        </p>
+      )}
 
       {lastPerformance && (
         <LastPerformance

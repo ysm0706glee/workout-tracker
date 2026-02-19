@@ -11,7 +11,7 @@ export interface RoutineGenerationInput {
 
 function exerciseListString(): string {
   return Object.entries(DEFAULT_EXERCISES)
-    .map(([group, exercises]) => `${group}: ${exercises.join(", ")}`)
+    .map(([group, exercises]) => `${group}: ${exercises.map((e) => e.name).join(", ")}`)
     .join("\n");
 }
 
@@ -37,15 +37,15 @@ Rules:
 - Give each routine a clear, descriptive name (e.g. "Push Day", "Upper Body A", "Full Body 1")
 - Balance muscle groups across the week
 - Consider recovery between sessions
+- Include a short description for each exercise (one sentence explaining the movement)
 
 Respond with ONLY valid JSON in this exact format, no other text:
 [
   {
     "name": "Routine Name",
     "exercises": [
-      { "name": "Exercise Name", "defaultSets": 4, "defaultReps": 8 }
+      { "name": "Exercise Name", "defaultSets": 4, "defaultReps": 8, "description": "Short one-sentence description of the movement" }
     ]
   }
 ]`;
 }
-
