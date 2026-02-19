@@ -68,24 +68,14 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      ("standalone" in window.navigator &&
-        (window.navigator as Navigator & { standalone: boolean }).standalone);
-
-    const { data, error: authError } = await supabase.auth.signInWithOAuth({
+    const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        skipBrowserRedirect: isStandalone,
       },
     });
     if (authError) {
       setError(authError.message);
-      return;
-    }
-    if (isStandalone && data.url) {
-      window.open(data.url, "_blank");
     }
   }
 
