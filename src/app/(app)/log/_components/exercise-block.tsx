@@ -15,10 +15,8 @@ interface ExerciseBlockProps {
   name: string;
   description?: string | null;
   sets: SetData[];
-  unit: string;
   lastPerformance: {
     sets: { weight: number; reps: number }[];
-    unit: string;
     date: string;
   } | null;
   suggestion?: { weight: number; reps: number } | null;
@@ -34,7 +32,6 @@ export function ExerciseBlock({
   name,
   description,
   sets,
-  unit,
   lastPerformance,
   suggestion,
   onUpdateSet,
@@ -69,7 +66,6 @@ export function ExerciseBlock({
       {lastPerformance && (
         <LastPerformance
           sets={lastPerformance.sets}
-          unit={lastPerformance.unit}
           date={lastPerformance.date}
         />
       )}
@@ -78,14 +74,13 @@ export function ExerciseBlock({
         <OverloadSuggestion
           weight={suggestion.weight}
           reps={suggestion.reps}
-          unit={unit}
           onApply={onApplySuggestion}
         />
       )}
 
       <div className="mb-1.5 grid grid-cols-[40px_1fr_1fr_40px] gap-2 text-[11px] uppercase tracking-wide text-muted-foreground">
         <span></span>
-        <span className="text-center">{unit}</span>
+        <span className="text-center">kg</span>
         <span className="text-center">Reps</span>
         <span></span>
       </div>
@@ -96,7 +91,6 @@ export function ExerciseBlock({
           index={i}
           weight={set.weight}
           reps={set.reps}
-          unit={unit}
           onWeightChange={(v) => onUpdateSet(i, "weight", v)}
           onRepsChange={(v) => onUpdateSet(i, "reps", v)}
           onRemove={() => onRemoveSet(i)}

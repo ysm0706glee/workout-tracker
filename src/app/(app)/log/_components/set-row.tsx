@@ -6,7 +6,6 @@ interface SetRowProps {
   index: number;
   weight: string;
   reps: string;
-  unit: string;
   onWeightChange: (value: string) => void;
   onRepsChange: (value: string) => void;
   onRemove: () => void;
@@ -16,7 +15,6 @@ export function SetRow({
   index,
   weight,
   reps,
-  unit,
   onWeightChange,
   onRepsChange,
   onRemove,
@@ -29,7 +27,7 @@ export function SetRow({
       <Input
         type="number"
         inputMode="decimal"
-        placeholder={unit}
+        placeholder="kg"
         value={weight}
         onChange={(e) => onWeightChange(e.target.value)}
         className="text-center"

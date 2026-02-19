@@ -6,7 +6,6 @@ import type { WorkoutExercise } from "@/types/database";
 
 export async function saveWorkout(
   exercises: WorkoutExercise[],
-  unit: "kg" | "lb",
   notes: string,
 ) {
   const supabase = await createClient();
@@ -18,7 +17,7 @@ export async function saveWorkout(
   const { error } = await supabase.from("workouts").insert({
     user_id: user.id,
     date: new Date().toISOString().split("T")[0],
-    unit,
+    unit: "kg",
     exercises,
     notes: notes || null,
   });
@@ -43,34 +42,10 @@ export async function getLastPerformance(exerciseName: string) {
       (e) => e.name === exerciseName,
     );
     if (exercise) {
-      return { sets: exercise.sets, unit: w.unit || "kg", date: w.date };
+      return { sets: exercise.sets, date: w.date };
     }
   }
   return null;
-}
-
-export async function getUserPreferences() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("user_preferences")
-    .select("*")
-    .single();
-  return data;
-}
-
-export async function updateUnit(unit: "kg" | "lb") {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-
-  await supabase
-    .from("user_preferences")
-    .upsert(
-      { user_id: user.id, unit, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" },
-    );
 }
 
 export async function getRoutineById(id: string) {
@@ -86,7 +61,6 @@ export async function getRoutineById(id: string) {
 export async function syncWorkout(
   localId: string,
   exercises: WorkoutExercise[],
-  unit: "kg" | "lb",
   notes: string,
   date: string,
 ) {
@@ -110,7 +84,7 @@ export async function syncWorkout(
     user_id: user.id,
     local_id: localId,
     date,
-    unit,
+    unit: "kg",
     exercises,
     notes: notes || null,
   });

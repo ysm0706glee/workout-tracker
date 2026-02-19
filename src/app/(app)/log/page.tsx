@@ -8,12 +8,9 @@ import { Label } from "@/components/ui/label";
 import { EmptyState } from "@/components/empty-state";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { ExerciseBlock } from "./_components/exercise-block";
-import { UnitToggle } from "./_components/unit-toggle";
 import {
   saveWorkout,
   getLastPerformance,
-  getUserPreferences,
-  updateUnit,
   getRoutineById,
 } from "./actions";
 import { calculateOverloadSuggestion } from "@/lib/calculations";
@@ -39,7 +36,6 @@ function LogPageInner() {
   const searchParams = useSearchParams();
   const routineId = searchParams.get("routineId");
 
-  const [unit, setUnit] = useState<"kg" | "lb">("kg");
   const [exercises, setExercises] = useState<WorkoutExerciseLocal[]>([]);
   const [notes, setNotes] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -48,7 +44,7 @@ function LogPageInner() {
   const [savedOffline, setSavedOffline] = useState(false);
   const [swapTarget, setSwapTarget] = useState<number | null>(null);
   const [lastPerformances, setLastPerformances] = useState<
-    Record<string, { sets: { weight: number; reps: number }[]; unit: string; date: string } | null>
+    Record<string, { sets: { weight: number; reps: number }[]; date: string } | null>
   >({});
 
   useEffect(() => {
@@ -76,9 +72,6 @@ function LogPageInner() {
 
   useEffect(() => {
     async function init() {
-      const prefs = await getUserPreferences();
-      if (prefs?.unit) setUnit(prefs.unit as "kg" | "lb");
-
       if (routineId) {
         const routine = await getRoutineById(routineId);
         if (routine) {
@@ -96,7 +89,6 @@ function LogPageInner() {
       }
     }
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routineId]);
 
   useEffect(() => {
@@ -112,7 +104,6 @@ function LogPageInner() {
         const muscleGroup = getExerciseMuscleGroup(exercise.name);
         result[exercise.name] = calculateOverloadSuggestion(
           perf.sets,
-          unit,
           muscleGroup,
         );
       } else {
@@ -120,12 +111,7 @@ function LogPageInner() {
       }
     }
     return result;
-  }, [exercises, lastPerformances, unit]);
-
-  function handleUnitChange(newUnit: "kg" | "lb") {
-    setUnit(newUnit);
-    updateUnit(newUnit);
-  }
+  }, [exercises, lastPerformances]);
 
   function addExercise(name: string) {
     setExercises([...exercises, { name, sets: [{ weight: "", reps: "" }] }]);
@@ -220,7 +206,7 @@ function LogPageInner() {
   function saveToQueue(cleaned: { name: string; sets: { weight: number; reps: number }[] }[]) {
     enqueue({
       exercises: cleaned,
-      unit,
+      unit: "kg",
       notes: notes.trim(),
       date: new Date().toISOString().split("T")[0],
     });
@@ -256,7 +242,7 @@ function LogPageInner() {
 
     setSaving(true);
     try {
-      await saveWorkout(cleaned, unit, notes.trim());
+      await saveWorkout(cleaned, notes.trim());
       router.push("/dashboard");
     } catch {
       // Network failure — save to offline queue
@@ -274,8 +260,6 @@ function LogPageInner() {
 
   return (
     <div>
-      <UnitToggle unit={unit} onUnitChange={handleUnitChange} />
-
       {exercises.length === 0 ? (
         <EmptyState message="Add an exercise to begin" />
       ) : (
@@ -284,7 +268,6 @@ function LogPageInner() {
             key={`${exercise.name}-${i}`}
             name={exercise.name}
             sets={exercise.sets}
-            unit={unit}
             lastPerformance={lastPerformances[exercise.name] ?? null}
             suggestion={suggestions[exercise.name] ?? null}
             onUpdateSet={(si, field, val) => updateSet(i, si, field, val)}

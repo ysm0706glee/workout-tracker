@@ -11,7 +11,6 @@ export async function syncPendingWorkouts(): Promise<number> {
       await syncWorkout(
         item.localId,
         item.exercises,
-        item.unit,
         item.notes,
         item.date,
       );

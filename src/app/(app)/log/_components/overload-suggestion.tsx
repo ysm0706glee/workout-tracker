@@ -3,14 +3,12 @@ import { TrendingUp } from "lucide-react";
 interface OverloadSuggestionProps {
   weight: number;
   reps: number;
-  unit: string;
   onApply: () => void;
 }
 
 export function OverloadSuggestion({
   weight,
   reps,
-  unit,
   onApply,
 }: OverloadSuggestionProps) {
   return (
@@ -18,7 +16,7 @@ export function OverloadSuggestion({
       <span>
         <TrendingUp className="mr-1 inline h-3 w-3" />
         <strong>Suggested:</strong> {weight}
-        {unit} &times; {reps}
+        kg &times; {reps}
       </span>
       <button
         onClick={onApply}

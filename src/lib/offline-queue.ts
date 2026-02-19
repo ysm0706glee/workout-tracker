@@ -5,7 +5,7 @@ const STORAGE_KEY = "ironlog_offline_queue";
 export interface QueuedWorkout {
   localId: string;
   exercises: WorkoutExercise[];
-  unit: "kg" | "lb";
+  unit: "kg";
   notes: string;
   date: string;
   queuedAt: string;

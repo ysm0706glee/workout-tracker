@@ -16,7 +16,7 @@ export function HistoryItem({ workout }: { workout: Workout }) {
     (s, e) => s + e.sets.length,
     0,
   );
-  const u = workout.unit || "kg";
+  const u = "kg";
 
   async function handleDelete() {
     if (!confirm("Delete this workout?")) return;

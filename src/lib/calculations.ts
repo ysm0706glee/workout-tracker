@@ -83,7 +83,6 @@ export function calculatePR(
 
 export function calculateOverloadSuggestion(
   lastSets: { weight: number; reps: number }[],
-  unit: "kg" | "lb",
   muscleGroup: string | null,
 ): { weight: number; reps: number } | null {
   if (!lastSets.length) return null;
@@ -114,7 +113,7 @@ export function calculateOverloadSuggestion(
   if (allHitTarget) {
     // Progress: increase weight
     const isLegs = muscleGroup === "Legs";
-    const increment = unit === "kg" ? (isLegs ? 5 : 2.5) : isLegs ? 10 : 5;
+    const increment = isLegs ? 5 : 2.5;
     return {
       weight: mainWeight + increment,
       reps: targetReps,

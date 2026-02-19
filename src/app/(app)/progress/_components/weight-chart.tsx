@@ -18,13 +18,7 @@ interface ChartDataPoint {
   e1rm: number;
 }
 
-export function WeightChart({
-  data,
-  unit,
-}: {
-  data: ChartDataPoint[];
-  unit: string;
-}) {
+export function WeightChart({ data }: { data: ChartDataPoint[] }) {
   return (
     <Card className="mb-3.5">
       <CardHeader className="pb-3">
@@ -49,7 +43,7 @@ export function WeightChart({
                 tick={{ fill: "#8888a0", fontSize: 11 }}
                 stroke="rgba(42,42,64,0.5)"
                 label={{
-                  value: `Weight (${unit})`,
+                  value: "Weight (kg)",
                   angle: -90,
                   position: "insideLeft",
                   fill: "#8888a0",

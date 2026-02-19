@@ -3,10 +3,9 @@ import { formatDate } from "@/lib/utils";
 interface PRCardProps {
   maxWeight: number;
   date: string;
-  unit: string;
 }
 
-export function PRCard({ maxWeight, date, unit }: PRCardProps) {
+export function PRCard({ maxWeight, date }: PRCardProps) {
   return (
     <div className="mb-3.5 flex items-center gap-3.5 rounded-[14px] border border-gold/30 bg-gradient-to-br from-gold/10 to-primary/10 p-4">
       <div className="text-[28px]">&#127942;</div>
@@ -15,7 +14,7 @@ export function PRCard({ maxWeight, date, unit }: PRCardProps) {
           Weight PR
         </div>
         <div className="mt-0.5 text-[22px] font-bold">
-          {maxWeight} {unit}
+          {maxWeight} kg
         </div>
         <div className="mt-0.5 text-xs text-muted-foreground">
           {formatDate(date)}
