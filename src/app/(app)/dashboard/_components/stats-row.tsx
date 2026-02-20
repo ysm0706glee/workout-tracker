@@ -3,18 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 interface StatsRowProps {
   total: number;
   thisWeek: number;
-  streak: number;
 }
 
-export function StatsRow({ total, thisWeek, streak }: StatsRowProps) {
+export function StatsRow({ total, thisWeek }: StatsRowProps) {
   const stats = [
     { value: total, label: "Workouts" },
     { value: thisWeek, label: "This Week" },
-    { value: streak, label: "Day Streak" },
   ];
 
   return (
-    <div className="mb-3.5 grid grid-cols-3 gap-2.5">
+    <div className="mb-3.5 grid grid-cols-2 gap-2.5">
       {stats.map((stat) => (
         <Card key={stat.label} className="py-4 text-center">
           <CardContent className="p-0 px-3.5">
