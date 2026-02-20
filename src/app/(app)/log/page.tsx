@@ -248,7 +248,7 @@ function LogPageInner() {
 
     setSaving(true);
     try {
-      await saveWorkout(cleaned, notes.trim());
+      await saveWorkout(cleaned, notes.trim(), routineId);
       router.push("/dashboard");
     } catch {
       // Network failure — save to offline queue

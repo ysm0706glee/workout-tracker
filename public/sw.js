@@ -67,3 +67,33 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 });
+
+// Push notification handler
+self.addEventListener("push", (event) => {
+  const data = event.data?.json() ?? {};
+  const title = data.title ?? "IronLog";
+  const options = {
+    body: data.body ?? "",
+    icon: "/favicon.ico",
+    badge: "/favicon.ico",
+    tag: data.tag ?? "ironlog-notification",
+    data: { url: data.url ?? "/dashboard" },
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click — open the app to the relevant page
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url ?? "/dashboard";
+  event.waitUntil(
+    clients.matchAll({ type: "window" }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes(url) && "focus" in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    }),
+  );
+});

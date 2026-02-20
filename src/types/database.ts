@@ -12,6 +12,7 @@ export interface Workout {
   id: string;
   user_id: string;
   local_id: string | null;
+  routine_id: string | null;
   date: string;
   unit: "kg";
   exercises: WorkoutExercise[];
@@ -53,8 +54,21 @@ export interface UserProfile {
   equipment:
     | ("barbell" | "dumbbells" | "machines" | "cables" | "bodyweight")[]
     | null;
+  target_days_per_week: number | null;
+  notify_missed_target: boolean;
+  notify_weekly_summary: boolean;
+  notify_routine_rotation: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface PushSubscriptionRecord {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
 }
 
 export interface Exercise {

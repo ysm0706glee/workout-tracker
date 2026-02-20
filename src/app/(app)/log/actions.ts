@@ -7,6 +7,7 @@ import type { WorkoutExercise } from "@/types/database";
 export async function saveWorkout(
   exercises: WorkoutExercise[],
   notes: string,
+  routineId?: string | null,
 ) {
   const supabase = await createClient();
   const {
@@ -20,6 +21,7 @@ export async function saveWorkout(
     unit: "kg",
     exercises,
     notes: notes || null,
+    routine_id: routineId ?? null,
   });
 
   if (error) throw new Error(error.message);
