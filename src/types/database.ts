@@ -48,9 +48,11 @@ export interface UserProfile {
   id: string;
   user_id: string;
   display_name: string | null;
-  fitness_goal: "strength" | "hypertrophy" | "endurance" | "general" | null;
+  fitness_goal: "strength" | "hypertrophy" | "general" | null;
   experience: "beginner" | "intermediate" | "advanced" | null;
-  equipment: "full_gym" | "dumbbells" | "home_gym" | "bodyweight" | null;
+  equipment:
+    | ("barbell" | "dumbbells" | "machines" | "cables" | "bodyweight")[]
+    | null;
   created_at: string;
   updated_at: string;
 }

@@ -18,7 +18,6 @@ interface GeneratedRoutine {
 const GOALS = [
   { value: "strength", label: "Strength", desc: "Lift heavier, get stronger" },
   { value: "hypertrophy", label: "Muscle Growth", desc: "Build size and definition" },
-  { value: "endurance", label: "Endurance", desc: "More reps, more stamina" },
   { value: "general", label: "General Fitness", desc: "Overall health and balance" },
 ];
 
@@ -29,36 +28,57 @@ const EXPERIENCE = [
 ];
 
 const EQUIPMENT = [
-  { value: "full_gym", label: "Full Gym", desc: "Barbells, machines, cables" },
-  { value: "dumbbells", label: "Dumbbells Only", desc: "Adjustable or fixed dumbbells" },
-  { value: "home_gym", label: "Home Gym", desc: "Basic rack, bench, weights" },
-  { value: "bodyweight", label: "Bodyweight", desc: "No equipment needed" },
+  { value: "barbell", label: "Barbell", desc: "Squats, bench press, deadlifts" },
+  { value: "dumbbells", label: "Dumbbells", desc: "DB press, curls, rows" },
+  { value: "machines", label: "Machines", desc: "Leg press, lat pulldown" },
+  { value: "cables", label: "Cables", desc: "Cable rows, tricep pushdowns" },
+  { value: "bodyweight", label: "Bodyweight", desc: "Pull-ups, dips, push-ups" },
 ];
 
 const MUSCLE_GROUPS = ["Chest", "Back", "Shoulders", "Arms", "Legs", "Core"];
 
-const STEPS = ["Goal", "Experience", "Frequency", "Equipment", "Focus"];
+type StepId = "goal" | "experience" | "frequency" | "equipment" | "focus";
+
+const ALL_STEPS: { id: StepId; label: string }[] = [
+  { id: "goal", label: "Goal" },
+  { id: "experience", label: "Experience" },
+  { id: "frequency", label: "Frequency" },
+  { id: "equipment", label: "Equipment" },
+  { id: "focus", label: "Focus" },
+];
 
 export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
   const router = useRouter();
+
+  // Skip steps that are already filled in the user's profile
+  const activeSteps = ALL_STEPS.filter((s) => {
+    if (s.id === "goal" && profile?.fitness_goal) return false;
+    if (s.id === "experience" && profile?.experience) return false;
+    if (s.id === "equipment" && profile?.equipment && profile.equipment.length > 0) return false;
+    return true;
+  });
+  const skippedCount = ALL_STEPS.length - activeSteps.length;
+
   const [step, setStep] = useState(0);
   const [goal, setGoal] = useState(profile?.fitness_goal ?? "");
   const [experience, setExperience] = useState(profile?.experience ?? "");
   const [daysPerWeek, setDaysPerWeek] = useState(3);
   const [sessionMinutes, setSessionMinutes] = useState(60);
-  const [equipment, setEquipment] = useState(profile?.equipment ?? "");
+  const [equipment, setEquipment] = useState<string[]>(profile?.equipment ?? []);
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<GeneratedRoutine[] | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const currentStepId = activeSteps[step]?.id;
+
   function canAdvance() {
-    if (step === 0) return !!goal;
-    if (step === 1) return !!experience;
-    if (step === 2) return true;
-    if (step === 3) return !!equipment;
-    if (step === 4) return true; // focus is optional
+    if (currentStepId === "goal") return !!goal;
+    if (currentStepId === "experience") return !!experience;
+    if (currentStepId === "frequency") return true;
+    if (currentStepId === "equipment") return equipment.length > 0;
+    if (currentStepId === "focus") return true;
     return true;
   }
 
@@ -79,7 +99,7 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
         experience,
         daysPerWeek,
         sessionMinutes,
-        equipment,
+        equipment: equipment.join(", "),
         focusAreas,
       });
       setResults(routines);
@@ -251,10 +271,16 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
 
   return (
     <div>
+      {skippedCount > 0 && (
+        <p className="mb-4 text-xs text-muted-foreground">
+          Using goal, experience, and equipment from your profile.
+        </p>
+      )}
+
       {/* Step indicator */}
       <div className="mb-6 flex items-center gap-1">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex flex-1 flex-col items-center gap-1">
+        {activeSteps.map((s, i) => (
+          <div key={s.id} className="flex flex-1 flex-col items-center gap-1">
             <div
               className={`h-1.5 w-full rounded-full ${
                 i <= step ? "bg-primary" : "bg-secondary"
@@ -265,14 +291,14 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
                 i === step ? "text-primary font-medium" : "text-muted-foreground"
               }`}
             >
-              {label}
+              {s.label}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Step 0: Goal */}
-      {step === 0 && (
+      {/* Step: Goal */}
+      {currentStepId === "goal" && (
         <div>
           <h2 className="mb-1 text-lg font-bold">What&apos;s your goal?</h2>
           <p className="mb-4 text-sm text-muted-foreground">
@@ -297,8 +323,8 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
         </div>
       )}
 
-      {/* Step 1: Experience */}
-      {step === 1 && (
+      {/* Step: Experience */}
+      {currentStepId === "experience" && (
         <div>
           <h2 className="mb-1 text-lg font-bold">Experience level?</h2>
           <p className="mb-4 text-sm text-muted-foreground">
@@ -323,8 +349,8 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
         </div>
       )}
 
-      {/* Step 2: Frequency & Duration */}
-      {step === 2 && (
+      {/* Step: Frequency & Duration */}
+      {currentStepId === "frequency" && (
         <div>
           <h2 className="mb-1 text-lg font-bold">How often & how long?</h2>
           <p className="mb-4 text-sm text-muted-foreground">
@@ -375,34 +401,39 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
         </div>
       )}
 
-      {/* Step 3: Equipment */}
-      {step === 3 && (
+      {/* Step: Equipment */}
+      {currentStepId === "equipment" && (
         <div>
           <h2 className="mb-1 text-lg font-bold">Available equipment?</h2>
           <p className="mb-4 text-sm text-muted-foreground">
-            Determines which exercises to include.
+            Select all that apply.
           </p>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="flex flex-wrap gap-2">
             {EQUIPMENT.map((e) => (
               <button
                 key={e.value}
-                onClick={() => setEquipment(e.value)}
-                className={`rounded-[14px] border p-4 text-left transition-colors ${
-                  equipment === e.value
-                    ? "border-primary bg-primary/10"
+                onClick={() =>
+                  setEquipment((prev) =>
+                    prev.includes(e.value)
+                      ? prev.filter((v) => v !== e.value)
+                      : [...prev, e.value],
+                  )
+                }
+                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
+                  equipment.includes(e.value)
+                    ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-card hover:border-muted-foreground/30"
                 }`}
               >
-                <div className="text-sm font-semibold">{e.label}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{e.desc}</div>
+                {e.label}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Step 4: Focus Areas */}
-      {step === 4 && (
+      {/* Step: Focus Areas */}
+      {currentStepId === "focus" && (
         <div>
           <h2 className="mb-1 text-lg font-bold">Any focus areas?</h2>
           <p className="mb-4 text-sm text-muted-foreground">
@@ -446,7 +477,7 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
           </Button>
         )}
         <div className="flex-1" />
-        {step < STEPS.length - 1 ? (
+        {step < activeSteps.length - 1 ? (
           <Button onClick={() => setStep(step + 1)} disabled={!canAdvance()}>
             Next
             <ArrowRight className="ml-1 h-4 w-4" />
