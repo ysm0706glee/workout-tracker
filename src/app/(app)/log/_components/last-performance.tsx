@@ -2,13 +2,12 @@ import { formatDate } from "@/lib/utils";
 
 interface LastPerformanceProps {
   sets: { weight: number; reps: number }[];
-  unit: string;
   date: string;
 }
 
-export function LastPerformance({ sets, unit, date }: LastPerformanceProps) {
+export function LastPerformance({ sets, date }: LastPerformanceProps) {
   const setsStr = sets
-    .map((s) => `${s.weight}${unit}\u00D7${s.reps}`)
+    .map((s) => `${s.weight}kg\u00D7${s.reps}`)
     .join(", ");
 
   return (

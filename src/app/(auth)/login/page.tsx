@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +18,33 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [awaitingPWAReturn, setAwaitingPWAReturn] = useState(false);
   const supabase = createClient();
+
+  // When in PWA standalone mode, OAuth opens in the system browser.
+  // When the user returns to the PWA, check for the session that was set there.
+  useEffect(() => {
+    if (!awaitingPWAReturn) return;
+
+    const checkAndRedirect = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = "/dashboard";
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAndRedirect();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [awaitingPWAReturn, supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,15 +94,77 @@ export default function LoginPage() {
   }
 
   async function handleGoogleLogin() {
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (authError) {
-      setError(authError.message);
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      ("standalone" in window.navigator &&
+        (window.navigator as Navigator & { standalone: boolean }).standalone);
+
+    if (isStandalone) {
+      // In PWA standalone mode, Supabase's default redirect navigates the PWA
+      // to Google's URL which iOS/Android intercepts and opens in the system
+      // browser. We use skipBrowserRedirect to get the URL first, then
+      // navigate manually and wait for the user to return.
+      const { data, error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          skipBrowserRedirect: true,
+        },
+      });
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+      if (data.url) {
+        setAwaitingPWAReturn(true);
+        window.location.href = data.url;
+      }
+    } else {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (authError) {
+        setError(authError.message);
+      }
     }
+  }
+
+  if (awaitingPWAReturn) {
+    return (
+      <div className="w-full max-w-[380px] text-center space-y-4">
+        <h2 className="text-xl font-bold">Complete sign-in</h2>
+        <p className="text-sm text-muted-foreground">
+          Finish signing in with Google in your browser, then return to this
+          app.
+        </p>
+        <Button
+          className="w-full"
+          onClick={async () => {
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            if (session) {
+              window.location.href = "/dashboard";
+            } else {
+              setError("Sign-in not completed. Please try again.");
+              setAwaitingPWAReturn(false);
+            }
+          }}
+        >
+          I&apos;ve signed in — continue
+        </Button>
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={() => setAwaitingPWAReturn(false)}
+        >
+          Cancel
+        </Button>
+      </div>
+    );
   }
 
   if (signupSuccess) {

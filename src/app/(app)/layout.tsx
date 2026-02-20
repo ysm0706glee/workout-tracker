@@ -26,7 +26,7 @@ export default async function AppLayout({
     .order("created_at", { ascending: false });
 
   return (
-    <div className="min-h-dvh pb-20">
+    <div className="mx-auto min-h-dvh max-w-md pb-20">
       <OfflineBanner />
       <QueueSync />
       <TopBar />

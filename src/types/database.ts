@@ -13,7 +13,7 @@ export interface Workout {
   user_id: string;
   local_id: string | null;
   date: string;
-  unit: "kg" | "lb";
+  unit: "kg";
   exercises: WorkoutExercise[];
   notes: string | null;
   created_at: string;
@@ -39,7 +39,7 @@ export interface Routine {
 export interface UserPreference {
   id: string;
   user_id: string;
-  unit: "kg" | "lb";
+  unit: "kg";
   created_at: string;
   updated_at: string;
 }
@@ -53,4 +53,12 @@ export interface UserProfile {
   equipment: "full_gym" | "dumbbells" | "home_gym" | "bodyweight" | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Exercise {
+  id: string;
+  user_id: string;
+  muscle_group: string;
+  name: string;
+  created_at: string;
 }

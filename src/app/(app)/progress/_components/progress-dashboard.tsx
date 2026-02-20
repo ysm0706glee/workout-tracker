@@ -44,11 +44,8 @@ export function ProgressDashboard({ workouts }: { workouts: Workout[] }) {
         maxWeight,
         volume,
         e1rm: bestE1rm,
-        unit: w.unit || "kg",
       };
     });
-
-  const unit = chartData[0]?.unit ?? "kg";
 
   return (
     <div>
@@ -63,17 +60,15 @@ export function ProgressDashboard({ workouts }: { workouts: Workout[] }) {
           <PRCard
             maxWeight={pr.maxWeight}
             date={pr.maxWeightDate}
-            unit={unit}
           />
           <OneRmCards
             e1rm={pr.maxE1rm}
             bestVolume={pr.maxVolume}
-            unit={unit}
           />
         </>
       )}
 
-      <WeightChart data={chartData} unit={unit} />
+      <WeightChart data={chartData} />
       <VolumeChart data={chartData} />
     </div>
   );

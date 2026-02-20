@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { deleteWorkout } from "../actions";
 import type { Workout } from "@/types/database";
@@ -16,9 +18,9 @@ export function HistoryItem({ workout }: { workout: Workout }) {
     (s, e) => s + e.sets.length,
     0,
   );
-  const u = workout.unit || "kg";
 
-  async function handleDelete() {
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation();
     if (!confirm("Delete this workout?")) return;
     await deleteWorkout(workout.id);
     router.refresh();
@@ -30,11 +32,23 @@ export function HistoryItem({ workout }: { workout: Workout }) {
       onClick={() => setExpanded(!expanded)}
     >
       <CardContent className="p-4">
-        <div className="text-[13px] font-semibold text-[#a29bfe]">
-          {formatDate(workout.date)}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {names} &middot; {totalSets} sets
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-[13px] font-semibold text-[#a29bfe]">
+              {formatDate(workout.date)}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {names} &middot; {totalSets} sets
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-red-400"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
 
         {expanded && (
@@ -48,7 +62,7 @@ export function HistoryItem({ workout }: { workout: Workout }) {
                     className="pl-3 text-[13px] text-muted-foreground"
                   >
                     Set {si + 1}: {s.weight}
-                    {u} &times; {s.reps}
+                    kg &times; {s.reps}
                   </div>
                 ))}
               </div>
@@ -58,15 +72,6 @@ export function HistoryItem({ workout }: { workout: Workout }) {
                 &ldquo;{workout.notes}&rdquo;
               </div>
             )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              className="mt-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive"
-            >
-              Delete Workout
-            </button>
           </div>
         )}
       </CardContent>
