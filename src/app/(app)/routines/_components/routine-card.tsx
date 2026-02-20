@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SwipeableDelete } from "@/components/swipeable-delete";
 import { deleteRoutine } from "../actions";
 import type { Routine } from "@/types/database";
 
@@ -31,23 +31,31 @@ export function RoutineCard({
   }
 
   return (
-    <SwipeableDelete onDelete={handleDelete}>
-      <Card className="transition-colors hover:border-primary">
-        <CardContent className="p-[18px]">
-          <div className="mb-1.5 text-[17px] font-bold">{routine.name}</div>
-          <div className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
-            {exList}
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleStart}>
-              Start
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => onEdit(routine)}>
-              Edit
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </SwipeableDelete>
+    <Card className="transition-colors hover:border-primary">
+      <CardContent className="p-[18px]">
+        <div className="mb-1.5 flex items-start justify-between">
+          <div className="text-[17px] font-bold">{routine.name}</div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-red-400"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="mb-3 text-[13px] leading-relaxed text-muted-foreground">
+          {exList}
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="default" className="bg-accent text-accent-foreground hover:bg-accent/90" onClick={handleStart}>
+            Start
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => onEdit(routine)}>
+            Edit
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
