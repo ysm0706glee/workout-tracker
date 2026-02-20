@@ -43,3 +43,11 @@ export interface UserPreference {
   created_at: string;
   updated_at: string;
 }
+
+export interface Exercise {
+  id: string;
+  user_id: string;
+  muscle_group: string;
+  name: string;
+  created_at: string;
+}
