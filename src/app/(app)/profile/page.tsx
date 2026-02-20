@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { calculateStreak, calculateWeekCount } from "@/lib/calculations";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProfileForm } from "./_components/profile-form";
+import { NotificationSettings } from "./_components/notification-settings";
 import { LogOutButton } from "@/components/logout-button";
 import { getProfile } from "./actions";
 import type { Workout } from "@/types/database";
@@ -72,6 +73,11 @@ export default async function ProfilePage() {
         profile={profile}
         email={user?.email ?? ""}
       />
+
+      {/* Notification Settings */}
+      <div className="mt-4">
+        <NotificationSettings profile={profile} />
+      </div>
 
       {/* Log out */}
       <div className="mt-6 flex justify-center">
