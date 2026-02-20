@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOutButton } from "@/components/logout-button";
+import { ProfileLink } from "@/components/profile-link";
 
 export function TopBar() {
   return (
@@ -8,7 +8,7 @@ export function TopBar() {
         <Link href="/dashboard" className="text-[22px] font-bold tracking-tight">
           Iron<span className="text-[#a29bfe]">Log</span>
         </Link>
-        <LogOutButton />
+        <ProfileLink />
       </div>
     </header>
   );
