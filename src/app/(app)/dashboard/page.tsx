@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { calculateStreak, calculateWeekCount } from "@/lib/calculations";
+import { calculateWeekCount } from "@/lib/calculations";
 import { StatsRow } from "./_components/stats-row";
 import { RecentWorkouts } from "./_components/recent-workouts";
 import { StartWorkoutDialog } from "./_components/start-workout-dialog";
@@ -24,12 +24,11 @@ export default async function DashboardPage() {
 
   const totalWorkouts = allWorkouts.length;
   const thisWeek = calculateWeekCount(allWorkouts);
-  const streak = calculateStreak(allWorkouts);
   const recent = allWorkouts.slice(0, 5);
 
   return (
     <div>
-      <StatsRow total={totalWorkouts} thisWeek={thisWeek} streak={streak} />
+      <StatsRow total={totalWorkouts} thisWeek={thisWeek} />
       <StartWorkoutDialog routines={allRoutines} />
       <RecentWorkouts workouts={recent} />
     </div>

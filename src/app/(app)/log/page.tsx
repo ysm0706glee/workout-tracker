@@ -15,8 +15,9 @@ import {
 } from "./actions";
 import { calculateOverloadSuggestion } from "@/lib/calculations";
 import { getExerciseMuscleGroup } from "@/lib/constants/exercises";
-import type { RoutineExercise } from "@/types/database";
+import type { RoutineExercise, Exercise } from "@/types/database";
 import { Plus, WifiOff } from "lucide-react";
+import { getUserExercises } from "@/app/(app)/exercises/actions";
 import { enqueue } from "@/lib/offline-queue";
 import { syncPendingWorkouts } from "@/lib/sync-workouts";
 import { getQueueCount } from "@/lib/offline-queue";
@@ -43,9 +44,14 @@ function LogPageInner() {
   const [isOffline, setIsOffline] = useState(false);
   const [savedOffline, setSavedOffline] = useState(false);
   const [swapTarget, setSwapTarget] = useState<number | null>(null);
+  const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
   const [lastPerformances, setLastPerformances] = useState<
     Record<string, { sets: { weight: number; reps: number }[]; date: string } | null>
   >({});
+
+  useEffect(() => {
+    getUserExercises().then(setCustomExercises);
+  }, []);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -314,6 +320,8 @@ function LogPageInner() {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         onSelect={addExercise}
+        customExercises={customExercises}
+        onExerciseAdded={(ex) => setCustomExercises((prev) => [...prev, ex])}
       />
 
       {/* Swap exercise picker (filtered by muscle group) */}
@@ -325,6 +333,8 @@ function LogPageInner() {
         onSelect={handleSwapSelect}
         title="Swap Exercise"
         filterGroup={swapFilterGroup}
+        customExercises={customExercises}
+        onExerciseAdded={(ex) => setCustomExercises((prev) => [...prev, ex])}
       />
     </div>
   );

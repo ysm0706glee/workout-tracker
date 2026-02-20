@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { createRoutine, updateRoutine } from "../actions";
 
-import type { Routine, RoutineExercise } from "@/types/database";
+import { getUserExercises } from "@/app/(app)/exercises/actions";
+import type { Routine, RoutineExercise, Exercise } from "@/types/database";
 
 interface RoutineBuilderDialogProps {
   open: boolean;
@@ -33,6 +34,11 @@ export function RoutineBuilderDialog({
     () => routine?.exercises.map((e) => ({ ...e })) ?? [],
   );
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
+
+  useEffect(() => {
+    if (open) getUserExercises().then(setCustomExercises);
+  }, [open]);
 
   function addExercise(exerciseName: string) {
     setExercises([
@@ -193,6 +199,8 @@ export function RoutineBuilderDialog({
         onOpenChange={setPickerOpen}
         onSelect={addExercise}
         title="Add Exercise to Routine"
+        customExercises={customExercises}
+        onExerciseAdded={(ex) => setCustomExercises((prev) => [...prev, ex])}
       />
     </>
   );
