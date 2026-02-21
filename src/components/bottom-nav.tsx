@@ -34,11 +34,17 @@ export function BottomNav({ routines }: { routines: Routine[] }) {
           const isActive = item.href !== "#start" && pathname.startsWith(item.href);
 
           if (item.isCenter) {
+            const isLogActive = pathname.startsWith("/log");
             return (
               <button
                 key={item.href}
                 onClick={() => setStartDialogOpen(true)}
-                className="mx-auto -mt-[18px] flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-[0_4px_20px_rgba(108,92,231,0.5)]"
+                className={cn(
+                  "mx-auto -mt-[18px] flex h-[52px] w-[52px] flex-shrink-0 items-center justify-center rounded-full text-white transition-shadow",
+                  isLogActive
+                    ? "bg-primary shadow-[0_4px_24px_rgba(108,92,231,0.8)] ring-2 ring-primary/50"
+                    : "bg-primary shadow-[0_4px_20px_rgba(108,92,231,0.5)]",
+                )}
               >
                 <Plus className="h-7 w-7" />
               </button>

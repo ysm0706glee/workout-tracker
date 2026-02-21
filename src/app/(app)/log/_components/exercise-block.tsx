@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SetRow } from "./set-row";
 import { LastPerformance } from "./last-performance";
 import { OverloadSuggestion } from "./overload-suggestion";
-import { ArrowRightLeft } from "lucide-react";
+import { ArrowRightLeft, Trash2 } from "lucide-react";
 
 interface SetData {
   weight: string;
@@ -53,7 +53,8 @@ export function ExerciseBlock({
             </Button>
           )}
           <Button size="sm" variant="destructive" onClick={onRemoveExercise}>
-            Skip
+            <Trash2 className="mr-1 h-3.5 w-3.5" />
+            Remove
           </Button>
         </div>
       </div>
