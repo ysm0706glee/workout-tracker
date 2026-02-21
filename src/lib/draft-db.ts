@@ -71,8 +71,8 @@ export async function loadDraft(): Promise<DraftData | null> {
         db.close();
         const result = request.result as DraftRecord | undefined;
         if (!result) return resolve(null);
-        const { key: _key, ...data } = result;
-        resolve(data);
+        const { exercises, notes, updatedAt } = result;
+        resolve({ exercises, notes, updatedAt });
       };
       request.onerror = () => {
         db.close();

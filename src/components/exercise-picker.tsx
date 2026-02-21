@@ -40,6 +40,7 @@ export function ExercisePicker({
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [addingGroup, setAddingGroup] = useState<string | null>(null);
+  const [addError, setAddError] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleSelect(name: string) {
@@ -61,15 +62,21 @@ export function ExercisePicker({
     setAdding(false);
     setNewName("");
     setAddingGroup(null);
+    setAddError("");
   }
 
   function handleAdd() {
     const name = newName.trim();
     if (!name || !addingGroup) return;
+    setAddError("");
     startTransition(async () => {
-      const exercise = await addCustomExercise(name, addingGroup);
-      onExerciseAdded?.(exercise);
-      handleSelect(exercise.name);
+      try {
+        const exercise = await addCustomExercise(name, addingGroup);
+        onExerciseAdded?.(exercise);
+        handleSelect(exercise.name);
+      } catch {
+        setAddError("Failed to add exercise. Please try again.");
+      }
     });
   }
 
@@ -204,6 +211,9 @@ export function ExercisePicker({
                   {isPending ? "Adding..." : "Add Exercise"}
                 </Button>
               </div>
+              {addError && (
+                <p className="text-sm text-destructive">{addError}</p>
+              )}
             </div>
           </div>
         )}

@@ -168,7 +168,8 @@ export function NotificationSettings({ profile }: NotificationSettingsProps) {
                         [type.key]: !prev[type.key],
                       }))
                     }
-                    className={`w-full rounded-[14px] border p-3 text-left transition-colors ${
+                    disabled={saving}
+                    className={`w-full rounded-[14px] border p-3 text-left transition-colors disabled:opacity-50 ${
                       notifications[type.key]
                         ? "border-primary bg-primary/10"
                         : "border-border bg-card hover:border-muted-foreground/30"
@@ -193,7 +194,8 @@ export function NotificationSettings({ profile }: NotificationSettingsProps) {
                       <button
                         key={n}
                         onClick={() => setTargetDays(n)}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-colors ${
+                        disabled={saving}
+                        className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:opacity-50 ${
                           targetDays === n
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"

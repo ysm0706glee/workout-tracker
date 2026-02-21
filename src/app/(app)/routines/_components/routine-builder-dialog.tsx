@@ -35,6 +35,8 @@ export function RoutineBuilderDialog({
   );
   const [pickerOpen, setPickerOpen] = useState(false);
   const [customExercises, setCustomExercises] = useState<Exercise[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open) getUserExercises().then(setCustomExercises);
@@ -45,6 +47,7 @@ export function RoutineBuilderDialog({
       ...exercises,
       { name: exerciseName, defaultSets: 3, defaultReps: 10 },
     ]);
+    setError("");
   }
 
   function removeExercise(index: number) {
@@ -64,23 +67,28 @@ export function RoutineBuilderDialog({
   }
 
   async function handleSave() {
+    setError("");
     if (!name.trim()) {
-      alert("Give your routine a name.");
+      setError("Give your routine a name.");
       return;
     }
     if (!exercises.length) {
-      alert("Add at least one exercise.");
+      setError("Add at least one exercise.");
       return;
     }
 
-    if (routine) {
-      await updateRoutine(routine.id, name.trim(), exercises);
-    } else {
-      await createRoutine(name.trim(), exercises);
+    setSaving(true);
+    try {
+      if (routine) {
+        await updateRoutine(routine.id, name.trim(), exercises);
+      } else {
+        await createRoutine(name.trim(), exercises);
+      }
+      onOpenChange(false);
+      router.refresh();
+    } finally {
+      setSaving(false);
     }
-
-    onOpenChange(false);
-    router.refresh();
   }
 
   return (
@@ -99,7 +107,10 @@ export function RoutineBuilderDialog({
               <Input
                 placeholder="e.g. Push Day, Leg Day..."
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (error) setError("");
+                }}
               />
             </div>
 
@@ -178,16 +189,21 @@ export function RoutineBuilderDialog({
               </Button>
             </div>
 
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 className="flex-1"
                 onClick={() => onOpenChange(false)}
+                disabled={saving}
               >
                 Cancel
               </Button>
-              <Button className="flex-1" onClick={handleSave}>
-                Save Routine
+              <Button className="flex-1" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Routine"}
               </Button>
             </div>
           </div>
