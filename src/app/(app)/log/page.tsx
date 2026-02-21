@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/empty-state";
+import { toast } from "sonner";
 import { ExercisePicker } from "@/components/exercise-picker";
 import { ExerciseBlock } from "./_components/exercise-block";
 import {
@@ -16,7 +18,7 @@ import {
 import { calculateOverloadSuggestion } from "@/lib/calculations";
 import { getExerciseMuscleGroup } from "@/lib/constants/exercises";
 import type { RoutineExercise, Exercise } from "@/types/database";
-import { Plus, WifiOff, RotateCcw, X } from "lucide-react";
+import { Plus, WifiOff, RotateCcw, X, Check } from "lucide-react";
 import { getUserExercises } from "@/app/(app)/exercises/actions";
 import { enqueue } from "@/lib/offline-queue";
 import { syncPendingWorkouts } from "@/lib/sync-workouts";
@@ -38,6 +40,7 @@ function LogPageInner() {
   const searchParams = useSearchParams();
   const routineId = searchParams.get("routineId");
 
+  const [isInitializing, setIsInitializing] = useState(true);
   const [exercises, setExercises] = useState<WorkoutExerciseLocal[]>([]);
   const [notes, setNotes] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -50,15 +53,15 @@ function LogPageInner() {
     Record<string, { sets: { weight: number; reps: number }[]; date: string } | null>
   >({});
 
-  const { draft, hasDraft, clearSavedDraft } = useWorkoutDraft(exercises, notes);
   const [showDraftBanner, setShowDraftBanner] = useState(false);
+  const { draft, hasDraft, lastSaved, clearSavedDraft } = useWorkoutDraft(exercises, notes, showDraftBanner);
 
-  // Show draft banner when a draft is detected (and not loading from a routine)
+  // Show draft banner whenever a draft is detected
   useEffect(() => {
-    if (hasDraft && !routineId) {
+    if (hasDraft) {
       setShowDraftBanner(true);
     }
-  }, [hasDraft, routineId]);
+  }, [hasDraft]);
 
   function resumeDraft() {
     if (!draft) return;
@@ -87,8 +90,31 @@ function LogPageInner() {
   }, [exercises]);
 
   useEffect(() => {
-    getUserExercises().then(setCustomExercises);
-  }, []);
+    async function init() {
+      const [customExs] = await Promise.all([
+        getUserExercises(),
+        routineId
+          ? getRoutineById(routineId).then((routine) => {
+              if (routine) {
+                const routineExercises = routine.exercises as RoutineExercise[];
+                setExercises(
+                  routineExercises.map((e) => ({
+                    name: e.name,
+                    sets: Array.from({ length: e.defaultSets || 3 }, () => ({
+                      weight: "",
+                      reps: e.defaultReps ? String(e.defaultReps) : "",
+                    })),
+                  })),
+                );
+              }
+            })
+          : Promise.resolve(),
+      ]);
+      setCustomExercises(customExs);
+      setIsInitializing(false);
+    }
+    init();
+  }, [routineId]);
 
   useEffect(() => {
     setIsOffline(!navigator.onLine);
@@ -112,27 +138,6 @@ function LogPageInner() {
     const result = await getLastPerformance(exerciseName);
     setLastPerformances((prev) => ({ ...prev, [exerciseName]: result }));
   }, [lastPerformances]);
-
-  useEffect(() => {
-    async function init() {
-      if (routineId) {
-        const routine = await getRoutineById(routineId);
-        if (routine) {
-          const routineExercises = routine.exercises as RoutineExercise[];
-          setExercises(
-            routineExercises.map((e) => ({
-              name: e.name,
-              sets: Array.from({ length: e.defaultSets || 3 }, () => ({
-                weight: "",
-                reps: e.defaultReps ? String(e.defaultReps) : "",
-              })),
-            })),
-          );
-        }
-      }
-    }
-    init();
-  }, [routineId]);
 
   useEffect(() => {
     exercises.forEach((exercise) => loadLastPerformance(exercise.name));
@@ -265,7 +270,7 @@ function LogPageInner() {
       exercise.sets.some((s) => s.weight && s.reps),
     );
     if (!valid.length) {
-      alert("Add at least one exercise with weight and reps.");
+      toast.error("Add at least one exercise with weight and reps.");
       return;
     }
 
@@ -288,6 +293,7 @@ function LogPageInner() {
     try {
       await saveWorkout(cleaned, notes.trim(), routineId);
       await clearSavedDraft();
+      toast.success("Workout saved!");
       router.push("/dashboard");
     } catch {
       // Network failure — save to offline queue
@@ -303,13 +309,18 @@ function LogPageInner() {
       ? getExerciseMuscleGroup(exercises[swapTarget]?.name) ?? undefined
       : undefined;
 
+  if (isInitializing) {
+    return <LogSkeleton />;
+  }
+
   return (
     <div>
       {showDraftBanner && draft && (
         <div className="mb-4 rounded-lg border border-[#6c5ce7]/30 bg-[#6c5ce7]/10 p-4">
           <p className="mb-3 text-sm text-[#a8a8b8]">
             You have an unsaved workout from{" "}
-            {new Date(draft.updatedAt).toLocaleString()}.
+            {new Date(draft.updatedAt).toLocaleString()}.{" "}
+            {draft.exercises.length} exercise{draft.exercises.length !== 1 ? "s" : ""}.
           </p>
           <div className="flex gap-2">
             <Button size="sm" onClick={resumeDraft}>
@@ -369,6 +380,13 @@ function LogPageInner() {
         </div>
       )}
 
+      {lastSaved && !savedOffline && (
+        <p className="mb-2 flex items-center justify-center gap-1 text-xs text-muted-foreground">
+          <Check className="h-3 w-3 text-green-500" />
+          Draft saved
+        </p>
+      )}
+
       <Button className="w-full" onClick={handleSave} disabled={saving}>
         {saving ? "Saving..." : isOffline ? "Save Offline" : "Save Workout"}
       </Button>
@@ -398,9 +416,20 @@ function LogPageInner() {
   );
 }
 
+function LogSkeleton() {
+  return (
+    <div>
+      <Skeleton className="mb-3 h-[120px] rounded-[14px]" />
+      <Skeleton className="mb-3 h-12 w-full rounded-lg" />
+      <Skeleton className="mb-4 h-24 w-full rounded-lg" />
+      <Skeleton className="h-11 w-full rounded-lg" />
+    </div>
+  );
+}
+
 export default function LogPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<LogSkeleton />}>
       <LogPageInner />
     </Suspense>
   );
