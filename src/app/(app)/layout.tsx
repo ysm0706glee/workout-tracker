@@ -3,6 +3,7 @@ import { TopBar } from "@/components/top-bar";
 import { BottomNav } from "@/components/bottom-nav";
 import { OfflineBanner } from "@/components/offline-banner";
 import { QueueSync } from "@/components/queue-sync";
+import { Toaster } from "@/components/ui/sonner";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppLayout({
@@ -32,6 +33,7 @@ export default async function AppLayout({
       <TopBar />
       <main className="p-5">{children}</main>
       <BottomNav routines={routines ?? []} />
+      <Toaster />
     </div>
   );
 }
