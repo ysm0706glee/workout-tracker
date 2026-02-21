@@ -16,11 +16,12 @@ import {
 import { calculateOverloadSuggestion } from "@/lib/calculations";
 import { getExerciseMuscleGroup } from "@/lib/constants/exercises";
 import type { RoutineExercise, Exercise } from "@/types/database";
-import { Plus, WifiOff } from "lucide-react";
+import { Plus, WifiOff, RotateCcw, X } from "lucide-react";
 import { getUserExercises } from "@/app/(app)/exercises/actions";
 import { enqueue } from "@/lib/offline-queue";
 import { syncPendingWorkouts } from "@/lib/sync-workouts";
 import { getQueueCount } from "@/lib/offline-queue";
+import { useWorkoutDraft } from "@/hooks/use-workout-draft";
 
 interface SetData {
   weight: string;
@@ -48,6 +49,42 @@ function LogPageInner() {
   const [lastPerformances, setLastPerformances] = useState<
     Record<string, { sets: { weight: number; reps: number }[]; date: string } | null>
   >({});
+
+  const { draft, hasDraft, clearSavedDraft } = useWorkoutDraft(exercises, notes);
+  const [showDraftBanner, setShowDraftBanner] = useState(false);
+
+  // Show draft banner when a draft is detected (and not loading from a routine)
+  useEffect(() => {
+    if (hasDraft && !routineId) {
+      setShowDraftBanner(true);
+    }
+  }, [hasDraft, routineId]);
+
+  function resumeDraft() {
+    if (!draft) return;
+    setExercises(draft.exercises);
+    setNotes(draft.notes);
+    setShowDraftBanner(false);
+  }
+
+  function discardDraft() {
+    clearSavedDraft();
+    setShowDraftBanner(false);
+  }
+
+  // Warn before closing tab with unsaved data
+  useEffect(() => {
+    const hasData = exercises.some(
+      (ex) => ex.name && ex.sets.some((s) => s.weight !== "" || s.reps !== "")
+    );
+    if (!hasData) return;
+
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [exercises]);
 
   useEffect(() => {
     getUserExercises().then(setCustomExercises);
@@ -216,6 +253,7 @@ function LogPageInner() {
       notes: notes.trim(),
       date: new Date().toISOString().split("T")[0],
     });
+    clearSavedDraft();
     setSavedOffline(true);
     setExercises([]);
     setNotes("");
@@ -249,6 +287,7 @@ function LogPageInner() {
     setSaving(true);
     try {
       await saveWorkout(cleaned, notes.trim(), routineId);
+      await clearSavedDraft();
       router.push("/dashboard");
     } catch {
       // Network failure — save to offline queue
@@ -266,7 +305,26 @@ function LogPageInner() {
 
   return (
     <div>
-      {exercises.length === 0 ? (
+      {showDraftBanner && draft && (
+        <div className="mb-4 rounded-lg border border-[#6c5ce7]/30 bg-[#6c5ce7]/10 p-4">
+          <p className="mb-3 text-sm text-[#a8a8b8]">
+            You have an unsaved workout from{" "}
+            {new Date(draft.updatedAt).toLocaleString()}.
+          </p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={resumeDraft}>
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+              Resume
+            </Button>
+            <Button size="sm" variant="ghost" onClick={discardDraft}>
+              <X className="mr-1.5 h-3.5 w-3.5" />
+              Discard
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {exercises.length === 0 && !showDraftBanner ? (
         <EmptyState message="Add an exercise to begin" />
       ) : (
         exercises.map((exercise, i) => (
