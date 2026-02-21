@@ -18,6 +18,8 @@ interface UseWorkoutDraftReturn {
   draft: DraftData | null;
   /** Whether a draft was found on mount */
   hasDraft: boolean;
+  /** Timestamp of the last successful auto-save (null before first save) */
+  lastSaved: Date | null;
   /** Clear the draft (after save or discard) */
   clearSavedDraft: () => Promise<void>;
 }
@@ -32,10 +34,12 @@ function hasContent(exercises: WorkoutExerciseLocal[]): boolean {
 
 export function useWorkoutDraft(
   exercises: WorkoutExerciseLocal[],
-  notes: string
+  notes: string,
+  paused: boolean = false
 ): UseWorkoutDraftReturn {
   const [draft, setDraft] = useState<DraftData | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const draftLoaded = useRef(false);
   const initialLoadDone = useRef(false);
 
@@ -53,9 +57,10 @@ export function useWorkoutDraft(
     });
   }, []);
 
-  // Auto-save with debounce
+  // Auto-save with debounce (paused while draft banner is visible to prevent
+  // routine default values from overwriting the saved draft)
   useEffect(() => {
-    if (!initialLoadDone.current) return;
+    if (!initialLoadDone.current || paused) return;
 
     const timer = setTimeout(() => {
       if (hasContent(exercises)) {
@@ -64,11 +69,12 @@ export function useWorkoutDraft(
           notes,
           updatedAt: new Date().toISOString(),
         });
+        setLastSaved(new Date());
       }
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [exercises, notes]);
+  }, [exercises, notes, paused]);
 
   const clearSavedDraft = useCallback(async () => {
     await clearDraft();
@@ -76,5 +82,5 @@ export function useWorkoutDraft(
     setHasDraft(false);
   }, []);
 
-  return { draft, hasDraft, clearSavedDraft };
+  return { draft, hasDraft, lastSaved, clearSavedDraft };
 }

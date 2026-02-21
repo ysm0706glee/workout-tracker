@@ -9,6 +9,7 @@ import { createRoutine } from "../../actions";
 import { generateRoutines } from "../actions";
 import type { RoutineExercise, UserProfile } from "@/types/database";
 import { ArrowLeft, ArrowRight, Sparkles, Loader2, Check, X } from "lucide-react";
+import { toast } from "sonner";
 
 interface GeneratedRoutine {
   name: string;
@@ -68,6 +69,7 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
   const [focusAreas, setFocusAreas] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState("");
+  const [stepError, setStepError] = useState("");
   const [results, setResults] = useState<GeneratedRoutine[] | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -156,6 +158,7 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
           await createRoutine(routine.name, routine.exercises);
         }
       }
+      toast.success("Routines saved!");
       router.push("/routines");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save routines");
@@ -412,13 +415,14 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
             {EQUIPMENT.map((e) => (
               <button
                 key={e.value}
-                onClick={() =>
+                onClick={() => {
                   setEquipment((prev) =>
                     prev.includes(e.value)
                       ? prev.filter((v) => v !== e.value)
                       : [...prev, e.value],
-                  )
-                }
+                  );
+                  setStepError("");
+                }}
                 className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
                   equipment.includes(e.value)
                     ? "border-primary bg-primary/10 text-primary"
@@ -429,6 +433,9 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
               </button>
             ))}
           </div>
+          {stepError && (
+            <p className="mt-3 text-sm text-destructive">{stepError}</p>
+          )}
         </div>
       )}
 
@@ -478,7 +485,18 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
         )}
         <div className="flex-1" />
         {step < activeSteps.length - 1 ? (
-          <Button onClick={() => setStep(step + 1)} disabled={!canAdvance()}>
+          <Button
+            onClick={() => {
+              if (!canAdvance()) {
+                if (currentStepId === "equipment") {
+                  setStepError("Select at least one piece of equipment to continue.");
+                }
+                return;
+              }
+              setStepError("");
+              setStep(step + 1);
+            }}
+          >
             Next
             <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
