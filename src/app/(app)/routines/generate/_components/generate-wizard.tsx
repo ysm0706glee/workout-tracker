@@ -48,7 +48,13 @@ const ALL_STEPS: { id: StepId; label: string }[] = [
   { id: "focus", label: "Focus" },
 ];
 
-export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
+export function GenerateWizard({
+  profile,
+  aiUsage,
+}: {
+  profile?: UserProfile | null;
+  aiUsage: { used: number; limit: number };
+}) {
   const router = useRouter();
 
   // Skip steps that are already filled in the user's profile
@@ -74,6 +80,8 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
   const [saving, setSaving] = useState(false);
 
   const currentStepId = activeSteps[step]?.id;
+  const usesLeft = aiUsage.limit - aiUsage.used;
+  const isLimitReached = usesLeft <= 0;
 
   function canAdvance() {
     if (currentStepId === "goal") return !!goal;
@@ -274,6 +282,15 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
 
   return (
     <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div />
+        <span className={`text-xs font-medium ${isLimitReached ? "text-destructive" : "text-muted-foreground"}`}>
+          {isLimitReached
+            ? "Monthly limit reached — resets on the 1st"
+            : `${usesLeft} of ${aiUsage.limit} generations left this month`}
+        </span>
+      </div>
+
       {skippedCount > 0 && (
         <p className="mb-4 text-xs text-muted-foreground">
           Using goal, experience, and equipment from your profile.
@@ -501,7 +518,7 @@ export function GenerateWizard({ profile }: { profile?: UserProfile | null }) {
             <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         ) : (
-          <Button onClick={handleGenerate} disabled={generating || !canAdvance()}>
+          <Button onClick={handleGenerate} disabled={generating || !canAdvance() || isLimitReached}>
             {generating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
