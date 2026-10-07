@@ -1,18 +1,16 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { RoutineExercise } from "@/types/database";
 
 export async function createRoutine(name: string, exercises: RoutineExercise[]) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("routines").insert({
-    user_id: user.id,
+    user_id: userId,
     name,
     exercises,
   });

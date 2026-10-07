@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { SetRow } from "./set-row";
 import { LastPerformance } from "./last-performance";
@@ -20,16 +21,26 @@ interface ExerciseBlockProps {
     date: string;
   } | null;
   suggestion?: { weight: number; reps: number } | null;
-  onUpdateSet: (setIndex: number, field: "weight" | "reps", value: string) => void;
-  onAddSet: () => void;
-  onRemoveSet: (setIndex: number) => void;
-  onRemoveExercise: () => void;
-  onSwapExercise?: () => void;
-  onApplySuggestion?: () => void;
+  index: number;
+  onUpdateSet: (
+    exerciseIndex: number,
+    setIndex: number,
+    field: "weight" | "reps",
+    value: string,
+  ) => void;
+  onAddSet: (exerciseIndex: number) => void;
+  onRemoveSet: (exerciseIndex: number, setIndex: number) => void;
+  onRemoveExercise: (exerciseIndex: number) => void;
+  onSwapExercise?: (exerciseIndex: number) => void;
+  onApplySuggestion?: (
+    exerciseIndex: number,
+    suggestion: { weight: number; reps: number },
+  ) => void;
 }
 
-export function ExerciseBlock({
+export const ExerciseBlock = memo(function ExerciseBlock({
   name,
+  index,
   description,
   sets,
   lastPerformance,
@@ -47,12 +58,12 @@ export function ExerciseBlock({
         <div className="text-[16px] font-semibold">{name}</div>
         <div className="flex gap-1.5">
           {onSwapExercise && (
-            <Button size="sm" variant="ghost" onClick={onSwapExercise}>
+            <Button size="sm" variant="ghost" onClick={() => onSwapExercise(index)}>
               <ArrowRightLeft className="mr-1 h-3.5 w-3.5" />
               Swap
             </Button>
           )}
-          <Button size="sm" variant="destructive" onClick={onRemoveExercise}>
+          <Button size="sm" variant="destructive" onClick={() => onRemoveExercise(index)}>
             <Trash2 className="mr-1 h-3.5 w-3.5" />
             Remove
           </Button>
@@ -75,7 +86,7 @@ export function ExerciseBlock({
         <OverloadSuggestion
           weight={suggestion.weight}
           reps={suggestion.reps}
-          onApply={onApplySuggestion}
+          onApply={() => onApplySuggestion(index, suggestion)}
         />
       )}
 
@@ -92,9 +103,9 @@ export function ExerciseBlock({
           index={i}
           weight={set.weight}
           reps={set.reps}
-          onWeightChange={(v) => onUpdateSet(i, "weight", v)}
-          onRepsChange={(v) => onUpdateSet(i, "reps", v)}
-          onRemove={() => onRemoveSet(i)}
+          onWeightChange={(v) => onUpdateSet(index, i, "weight", v)}
+          onRepsChange={(v) => onUpdateSet(index, i, "reps", v)}
+          onRemove={() => onRemoveSet(index, i)}
         />
       ))}
 
@@ -102,10 +113,10 @@ export function ExerciseBlock({
         variant="outline"
         size="sm"
         className="mt-2 w-full"
-        onClick={onAddSet}
+        onClick={() => onAddSet(index)}
       >
         + Add Set
       </Button>
     </div>
   );
-}
+});

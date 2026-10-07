@@ -1,6 +1,6 @@
 import type { Workout } from "@/types/database";
 
-export function calculateStreak(workouts: Workout[]): number {
+export function calculateStreak(workouts: Pick<Workout, "date">[]): number {
   if (!workouts.length) return 0;
 
   const dates = new Set(workouts.map((w) => w.date));
@@ -34,7 +34,9 @@ export function calculateStreak(workouts: Workout[]): number {
   return streak;
 }
 
-export function calculateWeekCount(workouts: Workout[]): number {
+export function calculateWeekCount(
+  workouts: Pick<Workout, "date">[],
+): number {
   const now = new Date();
   const weekStart = new Date(now);
   weekStart.setDate(now.getDate() - now.getDay());
@@ -48,7 +50,7 @@ export function calculate1RM(weight: number, reps: number): number {
 }
 
 export function calculatePR(
-  workouts: Workout[],
+  workouts: Pick<Workout, "date" | "exercises">[],
   exerciseName: string,
 ): {
   maxWeight: number;

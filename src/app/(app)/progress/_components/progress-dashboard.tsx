@@ -10,7 +10,11 @@ import { VolumeChart } from "./volume-chart";
 import { calculatePR } from "@/lib/calculations";
 import type { Workout } from "@/types/database";
 
-export function ProgressDashboard({ workouts }: { workouts: Workout[] }) {
+export function ProgressDashboard({
+  workouts,
+}: {
+  workouts: Pick<Workout, "date" | "exercises">[];
+}) {
   const exerciseNames = useMemo(() => {
     const set = new Set<string>();
     workouts.forEach((w) => w.exercises.forEach((e) => set.add(e.name)));

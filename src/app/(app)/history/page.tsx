@@ -1,13 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
 import { HistoryList } from "./_components/history-list";
-import type { Workout } from "@/types/database";
+import { getWorkoutsPage } from "./actions";
 
 export default async function HistoryPage() {
-  const supabase = await createClient();
-  const { data: workouts } = await supabase
-    .from("workouts")
-    .select("*")
-    .order("date", { ascending: false });
+  const { workouts, total } = await getWorkoutsPage(0);
 
-  return <HistoryList workouts={(workouts ?? []) as Workout[]} />;
+  return <HistoryList workouts={workouts} total={total} />;
 }

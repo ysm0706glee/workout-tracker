@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   LayoutGrid,
@@ -21,9 +22,9 @@ const navItems = [
   { href: "/progress", label: "Progress", icon: Activity },
 ];
 
-export function BottomNav({ routines }: { routines: Routine[] }) {
+// `routines` is null while the layout is still streaming them in
+export function BottomNav({ routines }: { routines: Routine[] | null }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [startDialogOpen, setStartDialogOpen] = useState(false);
 
   return (
@@ -52,9 +53,9 @@ export function BottomNav({ routines }: { routines: Routine[] }) {
           }
 
           return (
-            <button
+            <Link
               key={item.href}
-              onClick={() => router.push(item.href)}
+              href={item.href}
               className={cn(
                 "flex flex-1 flex-col items-center gap-1 py-1.5 text-[10px] font-medium transition-colors",
                 isActive ? "text-[#a29bfe]" : "text-muted-foreground",
@@ -62,7 +63,7 @@ export function BottomNav({ routines }: { routines: Routine[] }) {
             >
               <item.icon className="h-[22px] w-[22px]" />
               <span>{item.label}</span>
-            </button>
+            </Link>
           );
         })}
         </div>

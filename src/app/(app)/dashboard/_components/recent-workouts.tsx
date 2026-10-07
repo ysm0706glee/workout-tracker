@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
 import { formatDate } from "@/lib/utils";
-import type { Workout } from "@/types/database";
+import type { WorkoutSummary } from "@/types/database";
 
-export function RecentWorkouts({ workouts }: { workouts: Workout[] }) {
+export function RecentWorkouts({ workouts }: { workouts: WorkoutSummary[] }) {
   return (
     <Card>
       <CardHeader className="pb-3">

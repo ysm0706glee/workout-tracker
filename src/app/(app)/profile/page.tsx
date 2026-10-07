@@ -5,7 +5,6 @@ import { ProfileForm } from "./_components/profile-form";
 import { NotificationSettings } from "./_components/notification-settings";
 import { LogOutButton } from "@/components/logout-button";
 import { getProfile } from "./actions";
-import type { Workout } from "@/types/database";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -18,13 +17,13 @@ export default async function ProfilePage() {
     supabase.auth.getUser(),
     supabase
       .from("workouts")
-      .select("*")
+      .select("date")
       .order("date", { ascending: false }),
     getProfile(),
   ]);
 
   const user = userData.user;
-  const allWorkouts = (workouts ?? []) as Workout[];
+  const allWorkouts = workouts ?? [];
 
   const totalWorkouts = allWorkouts.length;
   const thisWeek = calculateWeekCount(allWorkouts);

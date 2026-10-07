@@ -1,15 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { getRoutines } from "@/lib/supabase/queries";
 import { RoutineList } from "./_components/routine-list";
-import type { Routine } from "@/types/database";
 
 export default async function RoutinesPage() {
-  const supabase = await createClient();
-  const { data: routines } = await supabase
-    .from("routines")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const routines = await getRoutines();
 
-  return (
-    <RoutineList routines={(routines ?? []) as Routine[]} />
-  );
+  return <RoutineList routines={routines} />;
 }
