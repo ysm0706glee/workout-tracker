@@ -22,9 +22,7 @@ export async function getProfile(): Promise<UserProfile | null> {
 
 export async function updateProfile(fields: {
   display_name?: string;
-  fitness_goal?: UserProfile["fitness_goal"];
   experience?: UserProfile["experience"];
-  equipment?: UserProfile["equipment"];
   target_days_per_week?: number | null;
   notify_missed_target?: boolean;
   notify_weekly_summary?: boolean;

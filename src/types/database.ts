@@ -49,11 +49,7 @@ export interface UserProfile {
   id: string;
   user_id: string;
   display_name: string | null;
-  fitness_goal: "strength" | "hypertrophy" | "general" | null;
   experience: "beginner" | "intermediate" | "advanced" | null;
-  equipment:
-    | ("barbell" | "dumbbells" | "machines" | "cables" | "bodyweight")[]
-    | null;
   target_days_per_week: number | null;
   notify_missed_target: boolean;
   notify_weekly_summary: boolean;

@@ -1,7 +1,7 @@
 # IronLog - Workout Tracker
 
 ## Project Overview
-IronLog is a workout tracking app built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, Supabase (Postgres + Auth), and the Anthropic SDK for AI-powered routine generation. UI components use Radix UI / shadcn.
+IronLog is a workout tracking app built with Next.js 16 (App Router), TypeScript, Tailwind CSS v4, and Supabase (Postgres + Auth). UI components use Radix UI / shadcn.
 
 ## Commands
 - `npm run dev` - Start development server
@@ -16,7 +16,6 @@ IronLog is a workout tracking app built with Next.js 16 (App Router), TypeScript
 - **Styling**: Tailwind CSS v4 with `tw-animate-css`
 - **Database**: Supabase Postgres with Row Level Security. Exercises and workouts are stored as JSONB columns.
 - **Auth**: Supabase Auth (callback at `src/app/auth/callback/`)
-- **AI**: Anthropic SDK (`claude-sonnet-4-5-20250929`) for routine generation
 - **Testing**: Vitest
 - **CI**: GitHub Actions (`.github/workflows/ci.yml`) — lint + build
 - **Pre-commit**: Husky + lint-staged (ESLint on `*.{ts,tsx}`)
@@ -35,7 +34,6 @@ src/
   hooks/
     use-workout-draft.ts  # IndexedDB draft auto-save for workout log
   lib/
-    ai/prompts.ts   # AI prompt builder for routine generation
     constants/      # Static data (exercise catalog with descriptions)
     supabase/       # Supabase client (server + client)
     calculations.ts # Progressive overload suggestion logic
@@ -44,7 +42,7 @@ src/
     push-server.ts / push.ts  # Push notification helpers
   types/database.ts # All TypeScript interfaces
 supabase/
-  migrations/       # Database schema (single migration file)
+  migrations/       # Database schema migrations
 ```
 
 ## Code Conventions
@@ -61,6 +59,5 @@ supabase/
 - Routines store exercises as JSONB arrays of `RoutineExercise` objects (`name`, `defaultSets`, `defaultReps`, optional `description`)
 - Workouts store exercises as JSONB arrays of `WorkoutExercise` objects (`name`, `sets[]`)
 - `DEFAULT_EXERCISES` is the static exercise catalog: `Record<string, ExerciseInfo[]>` grouped by muscle group, each with `name` and `description`
-- AI-generated routines include exercise descriptions; the prompt instructs the model to return descriptions in the JSON
 - Exercise descriptions are short (one sentence) describing the movement pattern
 - Workout log drafts are auto-saved to IndexedDB and restored on page load via `useWorkoutDraft` hook
