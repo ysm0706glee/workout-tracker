@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  Suspense,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,14 +19,13 @@ import { ExercisePicker } from "@/components/exercise-picker";
 import { ExerciseBlock } from "./_components/exercise-block";
 import {
   saveWorkout,
-  getLastPerformance,
-  getRoutineById,
+  getLastPerformances,
+  getLogInitData,
 } from "./actions";
 import { calculateOverloadSuggestion } from "@/lib/calculations";
 import { getExerciseMuscleGroup } from "@/lib/constants/exercises";
 import type { RoutineExercise, Exercise } from "@/types/database";
 import { Plus, WifiOff, RotateCcw, X, Check } from "lucide-react";
-import { getUserExercises } from "@/app/(app)/exercises/actions";
 import { enqueue } from "@/lib/offline-queue";
 import { syncPendingWorkouts } from "@/lib/sync-workouts";
 import { getQueueCount } from "@/lib/offline-queue";
@@ -76,10 +82,10 @@ function LogPageInner() {
   }
 
   // Warn before closing tab with unsaved data
+  const hasData = exercises.some(
+    (ex) => ex.name && ex.sets.some((s) => s.weight !== "" || s.reps !== "")
+  );
   useEffect(() => {
-    const hasData = exercises.some(
-      (ex) => ex.name && ex.sets.some((s) => s.weight !== "" || s.reps !== "")
-    );
     if (!hasData) return;
 
     const handler = (e: BeforeUnloadEvent) => {
@@ -87,31 +93,30 @@ function LogPageInner() {
     };
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
-  }, [exercises]);
+  }, [hasData]);
 
   useEffect(() => {
     async function init() {
-      const [customExs] = await Promise.all([
-        getUserExercises(),
-        routineId
-          ? getRoutineById(routineId).then((routine) => {
-              if (routine) {
-                const routineExercises = routine.exercises as RoutineExercise[];
-                setExercises(
-                  routineExercises.map((e) => ({
-                    name: e.name,
-                    sets: Array.from({ length: e.defaultSets || 3 }, () => ({
-                      weight: "",
-                      reps: e.defaultReps ? String(e.defaultReps) : "",
-                    })),
-                  })),
-                );
-              }
-            })
-          : Promise.resolve(),
-      ]);
-      setCustomExercises(customExs);
-      setIsInitializing(false);
+      try {
+        const { customExercises, routine } = await getLogInitData(routineId);
+        if (routine) {
+          const routineExercises = routine.exercises as RoutineExercise[];
+          setExercises(
+            routineExercises.map((e) => ({
+              name: e.name,
+              sets: Array.from({ length: e.defaultSets || 3 }, () => ({
+                weight: "",
+                reps: e.defaultReps ? String(e.defaultReps) : "",
+              })),
+            })),
+          );
+        }
+        setCustomExercises(customExercises);
+      } catch {
+        // Offline or request failed — the form still works without this data
+      } finally {
+        setIsInitializing(false);
+      }
     }
     init();
   }, [routineId]);
@@ -133,99 +138,101 @@ function LogPageInner() {
     };
   }, []);
 
-  const loadLastPerformance = useCallback(async (exerciseName: string) => {
-    if (lastPerformances[exerciseName] !== undefined) return;
-    const result = await getLastPerformance(exerciseName);
-    setLastPerformances((prev) => ({ ...prev, [exerciseName]: result }));
-  }, [lastPerformances]);
-
+  // Fetch last performance once per exercise name, batched into one request
+  const requestedNames = useRef(new Set<string>());
+  const exerciseNamesKey = exercises.map((e) => e.name).join("\n");
   useEffect(() => {
-    exercises.forEach((exercise) => loadLastPerformance(exercise.name));
-  }, [exercises, loadLastPerformance]);
+    const missing = [...new Set(exerciseNamesKey.split("\n"))].filter(
+      (name) => name && !requestedNames.current.has(name),
+    );
+    if (!missing.length) return;
+
+    missing.forEach((name) => requestedNames.current.add(name));
+    getLastPerformances(missing)
+      .then((result) => setLastPerformances((prev) => ({ ...prev, ...result })))
+      .catch(() => {
+        // Allow a retry the next time the exercise list changes
+        missing.forEach((name) => requestedNames.current.delete(name));
+      });
+  }, [exerciseNamesKey]);
 
   // Compute overload suggestions for each exercise
   const suggestions = useMemo(() => {
     const result: Record<string, { weight: number; reps: number } | null> = {};
-    for (const exercise of exercises) {
-      const perf = lastPerformances[exercise.name];
-      if (perf) {
-        const muscleGroup = getExerciseMuscleGroup(exercise.name);
-        result[exercise.name] = calculateOverloadSuggestion(
-          perf.sets,
-          muscleGroup,
-        );
-      } else {
-        result[exercise.name] = null;
-      }
+    for (const [name, perf] of Object.entries(lastPerformances)) {
+      result[name] = perf
+        ? calculateOverloadSuggestion(perf.sets, getExerciseMuscleGroup(name))
+        : null;
     }
     return result;
-  }, [exercises, lastPerformances]);
+  }, [lastPerformances]);
 
+  // Handlers are stable (functional updates) so memoized ExerciseBlocks only
+  // re-render when their own data changes.
   function addExercise(name: string) {
-    setExercises([...exercises, { name, sets: [{ weight: "", reps: "" }] }]);
+    setExercises((prev) => [...prev, { name, sets: [{ weight: "", reps: "" }] }]);
   }
 
-  function removeExercise(index: number) {
-    setExercises(exercises.filter((_, i) => i !== index));
-  }
-
-  function swapExercise(index: number, newName: string) {
-    setExercises(
-      exercises.map((exercise, i) =>
-        i === index ? { ...exercise, name: newName } : exercise,
-      ),
-    );
-  }
+  const removeExercise = useCallback((index: number) => {
+    setExercises((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   function handleSwapSelect(name: string) {
     if (swapTarget !== null) {
-      swapExercise(swapTarget, name);
+      const index = swapTarget;
+      setExercises((prev) =>
+        prev.map((exercise, i) =>
+          i === index ? { ...exercise, name } : exercise,
+        ),
+      );
       setSwapTarget(null);
     }
   }
 
-  function applySuggestion(exerciseIndex: number) {
-    const target = exercises[exerciseIndex];
-    const suggestion = suggestions[target.name];
-    if (!suggestion) return;
+  const applySuggestion = useCallback(
+    (exerciseIndex: number, suggestion: { weight: number; reps: number }) => {
+      setExercises((prev) =>
+        prev.map((e, ei) => {
+          if (ei !== exerciseIndex) return e;
+          return {
+            ...e,
+            sets: e.sets.map((s) => ({
+              weight: s.weight || String(suggestion.weight),
+              reps: s.reps || String(suggestion.reps),
+            })),
+          };
+        }),
+      );
+    },
+    [],
+  );
 
-    setExercises(
-      exercises.map((e, ei) => {
-        if (ei !== exerciseIndex) return e;
-        return {
-          ...e,
-          sets: e.sets.map((s) => ({
-            weight: s.weight || String(suggestion.weight),
-            reps: s.reps || String(suggestion.reps),
-          })),
-        };
-      }),
-    );
-  }
+  const updateSet = useCallback(
+    (
+      exerciseIndex: number,
+      setIndex: number,
+      field: "weight" | "reps",
+      value: string,
+    ) => {
+      setExercises((prev) =>
+        prev.map((exercise, ei) =>
+          ei === exerciseIndex
+            ? {
+                ...exercise,
+                sets: exercise.sets.map((s, si) =>
+                  si === setIndex ? { ...s, [field]: value } : s,
+                ),
+              }
+            : exercise,
+        ),
+      );
+    },
+    [],
+  );
 
-  function updateSet(
-    exerciseIndex: number,
-    setIndex: number,
-    field: "weight" | "reps",
-    value: string,
-  ) {
-    setExercises(
-      exercises.map((exercise, ei) =>
-        ei === exerciseIndex
-          ? {
-              ...exercise,
-              sets: exercise.sets.map((s, si) =>
-                si === setIndex ? { ...s, [field]: value } : s,
-              ),
-            }
-          : exercise,
-      ),
-    );
-  }
-
-  function addSet(exerciseIndex: number) {
-    setExercises(
-      exercises.map((exercise, ei) => {
+  const addSet = useCallback((exerciseIndex: number) => {
+    setExercises((prev) =>
+      prev.map((exercise, ei) => {
         if (ei !== exerciseIndex) return exercise;
         const last = exercise.sets.at(-1);
         return {
@@ -237,11 +244,11 @@ function LogPageInner() {
         };
       }),
     );
-  }
+  }, []);
 
-  function removeSet(exerciseIndex: number, setIndex: number) {
-    setExercises(
-      exercises
+  const removeSet = useCallback((exerciseIndex: number, setIndex: number) => {
+    setExercises((prev) =>
+      prev
         .map((exercise, ei) => {
           if (ei !== exerciseIndex) return exercise;
           const newSets = exercise.sets.filter((_, si) => si !== setIndex);
@@ -249,7 +256,7 @@ function LogPageInner() {
         })
         .filter((exercise) => exercise.sets.length > 0),
     );
-  }
+  }, []);
 
   function saveToQueue(cleaned: { name: string; sets: { weight: number; reps: number }[] }[]) {
     enqueue({
@@ -345,12 +352,13 @@ function LogPageInner() {
             sets={exercise.sets}
             lastPerformance={lastPerformances[exercise.name] ?? null}
             suggestion={suggestions[exercise.name] ?? null}
-            onUpdateSet={(si, field, val) => updateSet(i, si, field, val)}
-            onAddSet={() => addSet(i)}
-            onRemoveSet={(si) => removeSet(i, si)}
-            onRemoveExercise={() => removeExercise(i)}
-            onSwapExercise={() => setSwapTarget(i)}
-            onApplySuggestion={() => applySuggestion(i)}
+            index={i}
+            onUpdateSet={updateSet}
+            onAddSet={addSet}
+            onRemoveSet={removeSet}
+            onRemoveExercise={removeExercise}
+            onSwapExercise={setSwapTarget}
+            onApplySuggestion={applySuggestion}
           />
         ))
       )}

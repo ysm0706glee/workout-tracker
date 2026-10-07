@@ -20,6 +20,11 @@ export interface Workout {
   created_at: string;
 }
 
+export type WorkoutSummary = Pick<
+  Workout,
+  "id" | "date" | "exercises" | "notes"
+>;
+
 export interface RoutineExercise {
   name: string;
   defaultSets: number;

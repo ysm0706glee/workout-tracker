@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Reuse a visited tab for 30s instead of refetching on every switch.
+    // Server actions that call revalidatePath still invalidate it immediately.
+    staleTimes: { dynamic: 30 },
+  },
   async headers() {
     return [
       {

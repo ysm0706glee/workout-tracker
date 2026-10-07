@@ -19,9 +19,15 @@ import {
 import { cn, formatDate } from "@/lib/utils";
 import { deleteWorkout } from "../actions";
 import { toast } from "sonner";
-import type { Workout } from "@/types/database";
+import type { WorkoutSummary } from "@/types/database";
 
-export function HistoryItem({ workout }: { workout: Workout }) {
+export function HistoryItem({
+  workout,
+  onDeleted,
+}: {
+  workout: WorkoutSummary;
+  onDeleted?: () => void;
+}) {
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
 
@@ -34,6 +40,7 @@ export function HistoryItem({ workout }: { workout: Workout }) {
   async function handleDelete() {
     await deleteWorkout(workout.id);
     toast.success("Workout deleted");
+    onDeleted?.();
     router.refresh();
   }
 

@@ -1,8 +1,8 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUserId } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import type { WorkoutExercise } from "@/types/database";
+import type { Exercise, Routine, WorkoutExercise } from "@/types/database";
 
 export async function saveWorkout(
   exercises: WorkoutExercise[],
@@ -10,13 +10,11 @@ export async function saveWorkout(
   routineId?: string | null,
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated");
 
   const { error } = await supabase.from("workouts").insert({
-    user_id: user.id,
+    user_id: userId,
     date: new Date().toISOString().split("T")[0],
     unit: "kg",
     exercises,
@@ -28,36 +26,56 @@ export async function saveWorkout(
   revalidatePath("/dashboard");
   revalidatePath("/history");
   revalidatePath("/progress");
+  revalidatePath("/profile");
 }
 
-export async function getLastPerformance(exerciseName: string) {
+export async function getLastPerformances(exerciseNames: string[]) {
   const supabase = await createClient();
-  const { data: workouts } = await supabase
-    .from("workouts")
-    .select("*")
-    .order("date", { ascending: false });
+  const result: Record<
+    string,
+    { sets: WorkoutExercise["sets"]; date: string } | null
+  > = {};
 
-  if (!workouts) return null;
+  // One small query per exercise, in parallel: only the latest workout that
+  // contains it, instead of scanning every workout for every exercise.
+  await Promise.all(
+    exerciseNames.map(async (name) => {
+      const { data, error } = await supabase
+        .from("workouts")
+        .select("date, exercises")
+        .contains("exercises", JSON.stringify([{ name }]))
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-  for (const w of workouts) {
-    const exercise = (w.exercises as WorkoutExercise[]).find(
-      (e) => e.name === exerciseName,
-    );
-    if (exercise) {
-      return { sets: exercise.sets, date: w.date };
-    }
-  }
-  return null;
+      if (error) throw new Error(error.message);
+      const exercise = (data?.exercises as WorkoutExercise[] | undefined)?.find(
+        (e) => e.name === name,
+      );
+      result[name] = exercise ? { sets: exercise.sets, date: data!.date } : null;
+    }),
+  );
+
+  return result;
 }
 
-export async function getRoutineById(id: string) {
+// Everything the log page needs on mount, in a single round-trip
+export async function getLogInitData(routineId: string | null) {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("routines")
-    .select("*")
-    .eq("id", id)
-    .single();
-  return data;
+  const [{ data: customExercises, error }, { data: routine }] =
+    await Promise.all([
+      supabase.from("exercises").select("*").order("name", { ascending: true }),
+      routineId
+        ? supabase.from("routines").select("*").eq("id", routineId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+  if (error) throw new Error(error.message);
+  return {
+    customExercises: (customExercises ?? []) as Exercise[],
+    routine: routine as Routine | null,
+  };
 }
 
 export async function syncWorkout(
@@ -67,23 +85,21 @@ export async function syncWorkout(
   date: string,
 ) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+  const userId = await getUserId();
+  if (!userId) throw new Error("Not authenticated");
 
   // Dedup: skip if this local_id already exists for this user
   const { data: existing } = await supabase
     .from("workouts")
     .select("id")
     .eq("local_id", localId)
-    .eq("user_id", user.id)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (existing) return;
 
   const { error } = await supabase.from("workouts").insert({
-    user_id: user.id,
+    user_id: userId,
     local_id: localId,
     date,
     unit: "kg",
@@ -95,5 +111,6 @@ export async function syncWorkout(
   revalidatePath("/dashboard");
   revalidatePath("/history");
   revalidatePath("/progress");
+  revalidatePath("/profile");
 }
 

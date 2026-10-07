@@ -13,7 +13,7 @@ import { Plus } from "lucide-react";
 import type { Routine } from "@/types/database";
 
 interface StartWorkoutDialogProps {
-  routines: Routine[];
+  routines: Routine[] | null;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   trigger?: boolean;
@@ -53,7 +53,7 @@ export function StartWorkoutDialog({
           </div>
         </button>
 
-        {routines.length === 0 ? (
+        {routines === null ? null : routines.length === 0 ? (
           <div className="py-4 text-center text-[13px] text-muted-foreground">
             No routines yet.{" "}
             <button

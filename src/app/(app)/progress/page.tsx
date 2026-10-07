@@ -6,8 +6,12 @@ export default async function ProgressPage() {
   const supabase = await createClient();
   const { data: workouts } = await supabase
     .from("workouts")
-    .select("*")
+    .select("date, exercises")
     .order("date", { ascending: true });
 
-  return <ProgressDashboard workouts={(workouts ?? []) as Workout[]} />;
+  return (
+    <ProgressDashboard
+      workouts={(workouts ?? []) as Pick<Workout, "date" | "exercises">[]}
+    />
+  );
 }
